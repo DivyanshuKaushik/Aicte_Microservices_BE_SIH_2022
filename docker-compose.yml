@@ -1,0 +1,56 @@
+version: '3.9'
+services:
+  zookeeper:
+    container_name: zookeeper
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    container_name: kafka
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+    volumes:
+      - ./data/kafka:/var/run/docker.sock
+    environment:
+      - KAFKA_ADVERTISED_HOST_NAME=kafka
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+  mongo:
+    container_name: mongo
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/mongo:/data/db
+  auth:
+    container_name: auth
+    build: ./auth
+    ports:
+      - 3000:4000
+    volumes:
+      - ./auth:/app
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_TOPIC=auth
+      - MONGO_URI=mongodb://mongo:27017/auth
+      - MONGO_USER=admin
+      - MONGO_PASSWORD=admin
+      - MONGO_DATABASE=auth
+    depends_on:
+      - mongo
+  chat:
+    container_name: chat
+    build: ./chat
+    ports:
+      - 3001:4000
+    volumes:
+      - ./chat:/app
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_TOPIC=auth
+      - MONGO_URI=mongodb://mongo:27017/chat
+      - MONGO_USER=admin
+      - MONGO_PASSWORD=admin
+      - MONGO_DATABASE=chat
+    depends_on:
+      - mongo
