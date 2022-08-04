@@ -22,35 +22,31 @@ services:
       - "27017:27017"
     volumes:
       - ./data/mongo:/data/db
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=admin
-      - MONGO_INITDB_DATABASE=aicte
     networks:
       - aicte-network 
   mongo-express:
     container_name: mongo-express
     image: mongo-express
-    environment:
-      - ME_CONFIG_MONGODB_SERVER=mongo
-      - ME_CONFIG_MONGODB_PORT=27017
-      - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
-      - ME_CONFIG_MONGODB_AUTH_DATABASE=aicte
-      - ME_CONFIG_MONGODB_AUTH_USERNAME=admin
-      - ME_CONFIG_MONGODB_AUTH_PASSWORD=admin
-      - ME_CONFIG_BASICAUTH_USERNAME=dev
-      - ME_CONFIG_BASICAUTH_PASSWORD=dev
     depends_on:
       - mongo
     ports:
       - "8888:8081"
     networks:
       - aicte-network   
+  api-gateway:
+    container_name: api-gateway
+    build: ./api-gateway
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./data/api-gateway:/app
+    networks:
+      - aicte-network
   auth:
     container_name: auth
     build: ./auth
     ports:
-      - 4000:4000
+      - 4001:4000
     volumes:
       - ./auth:/app
     environment:
@@ -72,7 +68,7 @@ services:
     container_name: chat
     build: ./chat
     ports:
-      - 4001:4000
+      - 4002:4000
     volumes:
       - ./chat:/app
     environment:

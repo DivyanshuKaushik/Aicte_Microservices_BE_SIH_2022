@@ -1,5 +1,5 @@
 {
-  "name": "auth",
+  "name": "api-gateway",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,10 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "cassandra-driver": "^4.6.4",
-    "express": "^4.18.1",
-    "kafka-node": "^5.0.0",
-    "mongoose": "^6.5.0",
-    "uuid": "^8.3.2"
+    "apollo-server-express": "^3.10.0",
+    "express": "^4.18.1"
   }
 }
