@@ -15,31 +15,31 @@ services:
     environment:
       - KAFKA_ADVERTISED_HOST_NAME=kafka
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
-  mongo:
-    container_name: mongo
-    image: mongo
-    ports:
-      - "27017:27017"
-    volumes:
-      - ./data/mongo:/data/db
-    networks:
-      - aicte-network 
-  mongo-express:
-    container_name: mongo-express
-    image: mongo-express
-    depends_on:
-      - mongo
-    ports:
-      - "8888:8081"
-    networks:
-      - aicte-network   
+  # mongo:
+  #   container_name: mongo
+  #   image: mongo
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - ./data/mongo:/data/db
+  #   networks:
+  #     - aicte-network 
+  # mongo-express:
+  #   container_name: mongo-express
+  #   image: mongo-express
+  #   depends_on:
+  #     - mongo
+  #   ports:
+  #     - "8888:8081"
+  #   networks:
+  #     - aicte-network   
   api-gateway:
     container_name: api-gateway
     build: ./api-gateway
     ports:
       - "4000:4000"
     volumes:
-      - ./data/api-gateway:/app
+      - ./api-gateway:/app
     networks:
       - aicte-network
   auth:
@@ -50,18 +50,13 @@ services:
     volumes:
       - ./auth:/app
     environment:
+      - PORT=4000
+      - CASSANDRA_HOST=cassandra.ap-south-1.amazonaws.com
+      - CASSANDRA_REGION=ap-south-1
+      - CASSANDRA_USERNAME=Divyanshu-at-179683962947
+      - CASSANDRA_PASSWORD=rIB+JBT0gofd1TZFrTLq2Ras0nUBA+QO3yoOvu0iFnE=
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - KAFKA_TOPIC=auth
-      - MONGO_URI=mongodb://mongo:27017/auth
-      - MONGO_USER=admin
-      - MONGO_PASSWORD=admin
-      - MONGO_DATABASE=auth
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=admin
-      - ME_CONFIG_MONGODB_AUTH_USERNAME=admin
-      - ME_CONFIG_MONGODB_AUTH_PASSWORD=admin
-    depends_on:
-      - mongo
     networks:
       - aicte-network
   chat:
@@ -78,8 +73,6 @@ services:
       - MONGO_USER=admin
       - MONGO_PASSWORD=admin
       - MONGO_DATABASE=chat
-    depends_on:
-      - mongo
     networks:
       - aicte-network
 networks:
