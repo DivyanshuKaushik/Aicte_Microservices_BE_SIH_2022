@@ -30,6 +30,9 @@ async function start() {
   // parse req body as json
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+  app.get("/", (req, res) => {
+    res.json({status:"OK",message:"Welcome to AICTE API Gateway!"});
+  });
   app.listen({ port: 4000 }, () => {
     console.log(`Server up at http://localhost:${process.env.PORT || 4000}/graphql`);
   });
