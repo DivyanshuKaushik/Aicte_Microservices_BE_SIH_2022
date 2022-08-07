@@ -11,7 +11,7 @@ const sslOptions1 = {
 
 const db = new cassandra.Client({
     contactPoints: [process.env.CASSANDRA_HOST],
-    localDataCenter: process.env.CASSANDRA_REGION,
+    localDataCenter: process.env.AWS_REGION,
     authProvider: auth,
     sslOptions: sslOptions1,
     protocolOptions: { port: 9142 },
