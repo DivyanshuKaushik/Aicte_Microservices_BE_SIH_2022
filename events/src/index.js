@@ -1,8 +1,9 @@
 'use strict';
 const express = require('express');
 const uuid = require('uuid');
+const multer = require('multer');
 const { connectDB,db } = require('./db');
-const { Response } = require('./helpers');
+const { Response, uploadImage } = require('./helpers');
 
 // connect to aws keyspaces 
 connectDB()
@@ -13,20 +14,33 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// multer config 
+const storage = multer.memoryStorage();
+const fileFilter = (req,file,cb) => {
+    if (
+        file.mimetype === "image/jpg" ||
+        file.mimetype === "image/jpeg" ||
+        file.mimetype === "image/webp" ||
+        file.mimetype === "image/svg" ||
+        file.mimetype === "image/png"
+    ) {
+        cb(null, true);
+    } else {
+        cb(new Error("Image uploaded is not of type jpg/jpeg or png"), false);
+    }
+};
+const limits = {
+    fileSize: 1024*1024*5,
+}
+const upload = multer({ storage, fileFilter, limits });
+
 // routes for events
 
 // get all events 
 app.get('/events', async (req, res) => {
     try {
-        const {city} = req.query
-        let data;
-        if(city){
-            const query = 'select * from aicte.events where city = ?'
-            data = (await db.execute(query,[city])).rows
-        }else{
-            const query = 'select * from aicte.events'
-            data = (await db.execute(query,[])).rows 
-        }
+        const query = 'select * from aicte.events'
+        const data = (await db.execute(query,[])).rows 
         return res.status(200).json(Response(200, 'Success', data))
     } catch (error) {
         return res.status(500).json(Response(500, 'Error', error))
@@ -46,18 +60,19 @@ app.get('/events/:id', async (req, res) => {
 
 
 // register venue 
-app.post('/events', async (req, res) => {
+app.post('/events',upload.single('image'),async (req, res) => {
     try {
-        let { name,email,phone,state,city,address,pincode,capacity,website } = req.body
-        if (!(name &&  email &&  phone && state && city && address && pincode && capacity)){
+        const { name,description,caption,status,from_date,to_date,time } = req.body
+        console.log(req.file);
+        if (!(name && description && caption && status && from_date && to_date && time && req.file)) {
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
         }
-        website = website ? website : ''
         const id = uuid.v4()
         const timestamp = new Date().toISOString()
-        const save_venue = "insert into aicte.events (id,name,email,phone,state,city,address,pincode,capacity,website,createdat,updatedat) values (?,?,?,?,?,?,?,?,?,?,?,?)"
-        await db.execute(save_venue,[id,name,email,phone,state,city,address,pincode,capacity,website,timestamp,timestamp])
-        return res.json(Response(200, 'Success', { id, name, email, phone, state, city, address, pincode, capacity, website, createdat:timestamp, updatedat:timestamp }))
+        const image = await uploadImage(req.file.buffer, id)
+        const query = 'insert into aicte.events (id,name,description,caption,status,from_date,to_date,time,image,createdat,updatedat) values (?,?,?,?,?,?,?,?,?,?,?)'
+        const data = (await db.execute(query,[id,name,description,caption,status,from_date,to_date,time,image,timestamp,timestamp])).rows[0]
+        return res.status(200).json(Response(200, 'Success', data))
     }
     catch (error) {
         console.log(error);
@@ -88,7 +103,7 @@ app.delete('/events/:id', async (req, res) => {
     try {
         const delete_venue = `delete from aicte.events where id = ?`
         await db.execute(delete_venue,[req.params.id])
-        return res.json(Response(200, 'Success', "Venue deleted successfully"))
+        return res.json(Response(200, 'Success', "Event deleted successfully"))
     }
     catch (error) {
         return res.status(500).json(Response(500, 'Error', error))
