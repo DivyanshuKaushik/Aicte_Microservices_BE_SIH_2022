@@ -31,14 +31,8 @@ services:
       - 4001:4000
     volumes:
       - ./users:/app
-    environment:
-      - PORT=4000
-      - CASSANDRA_HOST=cassandra.ap-south-1.amazonaws.com
-      - CASSANDRA_REGION=ap-south-1
-      - CASSANDRA_USERNAME=Divyanshu-at-179683962947
-      - CASSANDRA_PASSWORD=rIB+JBT0gofd1TZFrTLq2Ras0nUBA+QO3yoOvu0iFnE=
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - KAFKA_TOPIC=auth
+    env_file:
+      - aicte.env
     networks:
       - aicte-network
   venue:
@@ -48,14 +42,19 @@ services:
       - 4002:4000
     volumes:
       - ./venue:/app
-    environment:
-      - PORT=4000
-      - CASSANDRA_HOST=cassandra.ap-south-1.amazonaws.com
-      - CASSANDRA_REGION=ap-south-1
-      - CASSANDRA_USERNAME=Divyanshu-at-179683962947
-      - CASSANDRA_PASSWORD=rIB+JBT0gofd1TZFrTLq2Ras0nUBA+QO3yoOvu0iFnE=
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - KAFKA_TOPIC=auth
+    env_file:
+      - aicte.env
+    networks:
+      - aicte-network
+  events:
+    container_name: events
+    build: ./events
+    ports:
+      - 4003:4000
+    volumes:
+      - ./events:/app
+    env_file:
+      - aicte.env
     networks:
       - aicte-network
 networks:
