@@ -15,24 +15,6 @@ services:
     environment:
       - KAFKA_ADVERTISED_HOST_NAME=kafka
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
-  # mongo:
-  #   container_name: mongo
-  #   image: mongo
-  #   ports:
-  #     - "27017:27017"
-  #   volumes:
-  #     - ./data/mongo:/data/db
-  #   networks:
-  #     - aicte-network 
-  # mongo-express:
-  #   container_name: mongo-express
-  #   image: mongo-express
-  #   depends_on:
-  #     - mongo
-  #   ports:
-  #     - "8888:8081"
-  #   networks:
-  #     - aicte-network   
   api-gateway:
     container_name: api-gateway
     build: ./api-gateway
@@ -42,13 +24,13 @@ services:
       - ./api-gateway:/app
     networks:
       - aicte-network
-  auth:
-    container_name: auth
-    build: ./auth
+  users:
+    container_name: users
+    build: ./users
     ports:
       - 4001:4000
     volumes:
-      - ./auth:/app
+      - ./users:/app
     environment:
       - PORT=4000
       - CASSANDRA_HOST=cassandra.ap-south-1.amazonaws.com
@@ -59,20 +41,21 @@ services:
       - KAFKA_TOPIC=auth
     networks:
       - aicte-network
-  chat:
-    container_name: chat
-    build: ./chat
+  venue:
+    container_name: venue
+    build: ./venue
     ports:
       - 4002:4000
     volumes:
-      - ./chat:/app
+      - ./venue:/app
     environment:
+      - PORT=4000
+      - CASSANDRA_HOST=cassandra.ap-south-1.amazonaws.com
+      - CASSANDRA_REGION=ap-south-1
+      - CASSANDRA_USERNAME=Divyanshu-at-179683962947
+      - CASSANDRA_PASSWORD=rIB+JBT0gofd1TZFrTLq2Ras0nUBA+QO3yoOvu0iFnE=
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - KAFKA_TOPIC=auth
-      - MONGO_URI=mongodb://mongo:27017/chat
-      - MONGO_USER=admin
-      - MONGO_PASSWORD=admin
-      - MONGO_DATABASE=chat
     networks:
       - aicte-network
 networks:

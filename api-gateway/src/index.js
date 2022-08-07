@@ -4,13 +4,14 @@ const {
   ApolloServerPluginLandingPageGraphQLPlayground,
 } = require("apollo-server-core");
 
-const authAPI = require("./datasources/auth");
-const chatAPI = require("./datasources/chat");
+const usersAPI = require("./datasources/users");
+const venueAPI = require("./datasources/venue");
 
 async function start() {
     const server = new ApolloServer({
         modules:[
-          require('./services/auth'),
+          require('./services/users'),
+          require('./services/venue')
         ],
         csrfPrevention: true,
         cache: "bounded",
@@ -19,8 +20,8 @@ async function start() {
         ],
         dataSources: () => {
           return {
-            authAPI: new authAPI(),
-            chatAPI: new chatAPI()
+            usersAPI: new usersAPI(),
+            venueAPI: new venueAPI(),
           };
         },
       });
