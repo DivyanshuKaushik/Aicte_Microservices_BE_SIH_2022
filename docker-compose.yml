@@ -17,11 +17,11 @@ services:
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
   api-gateway:
     container_name: api-gateway
-    build: ./api-gateway
+    build: .
     ports:
       - "4000:4000"
     volumes:
-      - ./api-gateway:/app
+      - .:/app
     networks:
       - aicte-network
   users:
