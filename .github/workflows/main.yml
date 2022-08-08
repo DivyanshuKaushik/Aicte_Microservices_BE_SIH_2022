@@ -22,8 +22,11 @@ jobs:
         id: meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
-          images: my-docker-hub-namespace/my-docker-hub-repository
-      
+          images: divyanshukaushik/aicte-portal
+          
+      - name: build env file
+        run: echo "${{secrets.ENV }}" > aicte.env
+
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
