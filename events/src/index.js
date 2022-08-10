@@ -1,9 +1,8 @@
 'use strict';
 const express = require('express');
 const uuid = require('uuid');
-const multer = require('multer');
 const { connectDB,db } = require('./db');
-const { Response, uploadImage } = require('./helpers');
+const { Response } = require('./helpers');
 
 // connect to aws keyspaces 
 connectDB()
@@ -13,26 +12,6 @@ const app = express();
 // parse req body as json
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// multer config 
-const storage = multer.memoryStorage();
-const fileFilter = (req,file,cb) => {
-    if (
-        file.mimetype === "image/jpg" ||
-        file.mimetype === "image/jpeg" ||
-        file.mimetype === "image/webp" ||
-        file.mimetype === "image/svg" ||
-        file.mimetype === "image/png"
-    ) {
-        cb(null, true);
-    } else {
-        cb(new Error("Image uploaded is not of type jpg/jpeg or png"), false);
-    }
-};
-const limits = {
-    fileSize: 1024*1024*5,
-}
-const upload = multer({ storage, fileFilter, limits });
 
 // routes for events
 
@@ -60,19 +39,17 @@ app.get('/events/:id', async (req, res) => {
 
 
 // register venue 
-app.post('/events',upload.single('image'),async (req, res) => {
+app.post('/events',async (req, res) => {
     try {
-        const { name,description,caption,status,from_date,to_date,time } = req.body
-        console.log(req.file);
-        if (!(name && description && caption && status && from_date && to_date && time && req.file)) {
+        const { name,description,caption,status,from_date,to_date,time,image,organiser } = req.body
+        if (!(name && description && caption && status && from_date && to_date && time && image && organiser)) {
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
         }
         const id = uuid.v4()
         const timestamp = new Date().toISOString()
-        const image = await uploadImage(req.file.buffer, id)
-        const query = 'insert into aicte.events (id,name,description,caption,status,from_date,to_date,time,image,createdat,updatedat) values (?,?,?,?,?,?,?,?,?,?,?)'
-        const data = (await db.execute(query,[id,name,description,caption,status,from_date,to_date,time,image,timestamp,timestamp])).rows[0]
-        return res.status(200).json(Response(200, 'Success', data))
+        const query = 'insert into aicte.events (id,name,description,caption,status,from_date,to_date,time,image,organiser,createdat,updatedat) values (?,?,?,?,?,?,?,?,?,?,?,?)'
+        await db.execute(query,[id,name,description,caption,status,from_date,to_date,time,image,organiser,timestamp,timestamp])
+        return res.status(200).json(Response(200, 'Success', { id, name, description, caption, status, from_date, to_date, time, image,organiser, createdat: timestamp, updatedat: timestamp }))
     }
     catch (error) {
         console.log(error);
@@ -83,15 +60,14 @@ app.post('/events',upload.single('image'),async (req, res) => {
 // update venue details
 app.put('/events/:id', async (req, res) => {
     try {
-        let { name,email,phone,state,city,address,pincode,capacity,website } = req.body
-        if (!(name &&  email &&  phone && state && city && address && pincode && capacity)){
+        const { name,description,caption,status,from_date,to_date,time,image,organiser } = req.body
+        if (!(name && description && caption && status && from_date && to_date && time && image && organiser)){
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
         }
-        website = website ? website : ''
         const timestamp = new Date().toISOString()
-        const update_venue = `update aicte.events set name = ?,email = ?,phone = ?,state = ?,city = ?,address = ?,pincode = ?,capacity = ?,website = ?,updatedAt = ? where id = ?`
-        await db.execute(update_venue,[name, email,phone,state,city,address,pincode,capacity,website,timestamp,req.params.id])
-        return res.json(Response(200, 'Success', "Venue updated successfully"))
+        const update_event = `update aicte.events set name = ?,description = ?,caption = ?,status = ?,from_date = ?,to_date = ?,time = ?,image = ?,organiser = ?,updatedat = ? where id = ?`
+        await db.execute(update_event,[name,description,caption,status,from_date,to_date,time,image,organiser,timestamp,req.params.id])
+        return res.json(Response(200, 'Success', "Event updated successfully"))
     }
     catch (error) {
         return res.status(500).json(Response(500, 'Error', error))

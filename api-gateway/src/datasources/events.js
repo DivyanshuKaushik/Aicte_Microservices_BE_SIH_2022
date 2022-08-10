@@ -5,6 +5,9 @@ class eventsAPI extends RESTDataSource {
     super();
     this.baseURL = 'http://events:4000';
   }
+  willSendRequest(req) {
+    req.headers.set("user",JSON.stringify(this.context.req.user));
+  }
 
   async getEvents() {
     return await this.get(`/events`);
@@ -22,21 +25,21 @@ class eventsAPI extends RESTDataSource {
     }
   }
 
-//   async updateEvent(event){
-//     try {
-//       return await this.put(`/events/${event.id}`,event)
-//     } catch (error) {
-//       throw Error(JSON.stringify(error.extensions.response.body))
-//     }
-//   }
+  async updateEvent(event){
+    try {
+      return await this.put(`/events/${event.id}`,event)
+    } catch (error) {
+      throw Error(JSON.stringify(error.extensions.response.body))
+    }
+  }
 
-//   async deleteEvent(id){
-//     try{
-//       return await this.delete(`/events/${id}`);
-//     }catch(error){
-//       throw Error(JSON.stringify(error.extensions.response.body))
-//     }
-//   }
+  async deleteEvent(id){
+    try{
+      return await this.delete(`/events/${id}`);
+    }catch(error){
+      throw Error(JSON.stringify(error.extensions.response.body))
+    }
+  }
 
 }
 module.exports = eventsAPI;

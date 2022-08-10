@@ -30,6 +30,24 @@ app.get('/users/:id', async(req, res) => {
     res.status(200).json(Response(200, 'Success', data))
 });
 
+app.post('/users/login',async(req, res) => {
+    try{
+        const { email, password } = req.body;
+        const query = 'select * from aicte.users where email = ? allow filtering'
+        const data = (await db.execute(query,[email])).rows[0]
+        if(!data){
+            return res.status(400).json(Response(400, 'Bad request', 'User not found'))
+        }
+        const isMatch = await bcrypt.compare(password, data.password)
+        if(!isMatch){
+            return res.status(400).json(Response(400, 'Bad request', 'Invalid Credentials'))
+        }
+        return res.status(200).json(Response(200, 'Success', data))
+    }catch(err){
+        res.status(500).json(Response(500, 'Error', err))
+    }
+})
+
 // register new user 
 app.post('/users', async(req, res) => {
     try{
@@ -44,7 +62,7 @@ app.post('/users', async(req, res) => {
         }
         const id = uuid.v4()
         password = await bcrypt.hash(password,12)
-        const timestamp = new Date()
+        const timestamp = new Date().toISOString()
         const save_user = `insert into aicte.users (id,name,email,phone,role,password,department,createdAt,updatedAt) values (?,?,?,?,?,?,?,?,?)`
         await db.execute(save_user,[id,name, email,phone,role,password,department,timestamp,timestamp])
         res.json(Response(200, 'Success', { id, name, email, password,phone,role,department,createdAt:timestamp,updatedAt:timestamp }))
@@ -62,7 +80,7 @@ app.put('/users/:id', async(req, res) => {
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
         }
         const id = req.params.id
-        const timestamp = new Date()
+        const timestamp = new Date().toISOString()
         const update_user = `update aicte.users set name = ?, email = ?, phone = ?, role = ?, department = ?, updatedAt = ? where id = ?`
         await db.execute(update_user,[name, email,phone,role,department,timestamp,id])
         res.json(Response(200, 'Success', "User updated successfully"))
@@ -80,7 +98,7 @@ app.patch('/users/:id/password', async(req, res) => {
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
         }
         const id = req.params.id
-        const timestamp = new Date()
+        const timestamp = new Date().toISOString()
         const update_user = `update aicte.users set password = ?, updatedAt = ? where id = ?`
         password = await bcrypt.hash(password,12)
         await db.execute(update_user,[password,timestamp,id])

@@ -17,16 +17,20 @@ services:
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
   api-gateway:
     container_name: api-gateway
-    build: .
+    build: ./api-gateway
+    image: divyanshukaushik/api-gateway
     ports:
       - "4000:4000"
     volumes:
-      - .:/app
+      - ./api-gateway:/app
+    env_file:
+      - aicte.env
     networks:
       - aicte-network
   users:
     container_name: users
     build: ./users
+    image: divyanshukaushik/users
     ports:
       - 4001:4000
     volumes:
@@ -38,6 +42,7 @@ services:
   venue:
     container_name: venue
     build: ./venue
+    image: divyanshukaushik/venue
     ports:
       - 4002:4000
     volumes:
@@ -49,6 +54,7 @@ services:
   events:
     container_name: events
     build: ./events
+    image: divyanshukaushik/events
     ports:
       - 4003:4000
     volumes:
