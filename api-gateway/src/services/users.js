@@ -11,8 +11,8 @@ const typeDefs = gql`
         role: String!
         password: String!
         department: String!
-        createdat: String
-        updatedat: String
+        createdat: String!
+        updatedat: String!
     }
     type AuthUser{
         id: ID!
@@ -21,9 +21,9 @@ const typeDefs = gql`
         phone: String!
         role: String!
         department: String!
-        createdat: String
-        updatedat: String
-        token: String
+        createdat: String!
+        updatedat: String!
+        token: String!
     }
     extend type Query {
         getUsers: [User]
@@ -41,23 +41,24 @@ const resolvers = {
     Query: {
         getUsers: async(_, args, {dataSources,req} ,info) => {
             try {
+                console.log(req.headers.Authorization);
                 req.user = await isAuthenticated(req)
                 return (await dataSources.usersAPI.getUsers()).data;
             } catch (error) {
                 throw new Error(error);
             }
         },
-        async getUser(_, args, { dataSources }, info) {
+        async getUser(_, args, { dataSources,req }, info) {
             try {
                 req.user = await isAuthenticated(req)
                 return (await dataSources.usersAPI.getUser(args.id)).data;
             } catch (error) {
-                throw new Error(error.data);
+                throw new Error(error);
             }
         }
     },
     Mutation:{
-        async loginUser(_, args, { dataSources }, info) {
+        async loginUser(_, args, { dataSources ,req }, info) {
             try {
                 const user = (await dataSources.usersAPI.loginUser(args)).data
                 delete user.password
@@ -75,7 +76,7 @@ const resolvers = {
                 throw new UserInputError(err)
             }
         },
-        async updateUser(_,args,{dataSources},info){
+        async updateUser(_,args,{dataSources,req},info){
             try{
                 req.user = await isAuthenticated(req)
                 return (await dataSources.usersAPI.updateUser(args)).data;
@@ -83,7 +84,7 @@ const resolvers = {
                 throw new UserInputError(err)
             }
         },
-        async updatePassword(_,{id,password},{dataSources},info){
+        async updatePassword(_,{id,password},{dataSources,req},info){
             try{
                 req.user = await isAuthenticated(req)
                 return (await dataSources.usersAPI.updatePassword(id,password)).data;
@@ -91,7 +92,7 @@ const resolvers = {
                 throw new UserInputError(err)
             }
         },
-        async deleteUser(_,args,{dataSources},info){
+        async deleteUser(_,args,{dataSources,req},info){
             try{
                 req.user = await isAdmin(req)
                 return (await dataSources.usersAPI.deleteUser(args.id)).data;

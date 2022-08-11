@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const { ApolloServer } = require("apollo-server-express");
 const {
   ApolloServerPluginLandingPageGraphQLPlayground,
@@ -38,6 +39,9 @@ async function start() {
   // parse req body as json
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+
+  // cors config 
+  app.use(cors({ origin: "*" }));
 
   // image upload route /upload
   app.use(require('./upload'))
