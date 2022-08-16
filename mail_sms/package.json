@@ -1,0 +1,17 @@
+{
+  "name": "mail_sms",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./src/email.js",
+  "scripts": {
+    "start": "node ./src/email.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1195.0",
+    "kafka-node": "^5.0.0",
+    "kafkajs": "^2.2.0"
+  }
+}

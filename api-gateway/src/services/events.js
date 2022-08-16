@@ -15,14 +15,33 @@ const typeDefs = gql`
         createdat: String!
         updatedat: String!
     }
+    type Invite {
+        id: ID!
+        event_id: ID!
+        user_id: ID!
+        name: String!
+        email: String!
+        phone: String!
+        createdat: String!
+        updatedat: String!
+    }
+    input InviteUser {
+        id: ID!
+        name: String!
+        email: String!
+        phone: String!
+    }
     extend type Query {
         getEvents: [Event]
         getEvent(id: ID!): Event
+        getInvites(event_id: ID!): [Invite]
+        getInvitedEvents(user_id: ID!): [Event]
     }
     extend type Mutation{
     createEvent(name:String!,description:String!,organiser:String!,caption:String!,status:String!,from_date:String!,to_date:String!,time:String!,image:String!): Event
     updateEvent(id:ID!,name:String!,description:String!,,organiser:String!caption:String!,status:String!,from_date:String!,to_date:String!,time:String!,image:String!): String! 
     deleteEvent(id:ID!): String! 
+    inviteUsers(event_id:ID!,users:[InviteUser]): String!
   }
 `
 const resolvers = {
@@ -37,6 +56,20 @@ const resolvers = {
         async getEvent(_, args, { dataSources }, info) {
             try {
                 return (await dataSources.eventsAPI.getEvent(args.id)).data;
+            } catch (error) {
+                throw new Error(error.data);
+            }
+        },
+        async getInvites(_, args, { dataSources }, info) {
+            try {
+                return (await dataSources.eventsAPI.getInvites(args.event_id)).data;
+            } catch (error) {
+                throw new Error(error.data);
+            }
+        },
+        async getInvitedEvents(_, args, { dataSources }, info) {
+            try {
+                return (await dataSources.eventsAPI.getInvitedEvents(args.user_id)).data;
             } catch (error) {
                 throw new Error(error.data);
             }
@@ -64,6 +97,13 @@ const resolvers = {
                 throw new UserInputError(err)
             }
         },
+        async inviteUsers(_,args,{dataSources},info){
+            try{
+                return (await dataSources.eventsAPI.inviteUsers(args)).data;
+            }catch(err){
+                throw new UserInputError(err)
+            }
+        }
     }
 }
 module.exports = {typeDefs, resolvers};

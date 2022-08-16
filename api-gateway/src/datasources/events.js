@@ -41,5 +41,28 @@ class eventsAPI extends RESTDataSource {
     }
   }
 
+  async inviteUsers(data){
+    try{
+      return await this.post(`/events/${data.event_id}/invite`,data);
+    }catch(error){
+      throw Error(JSON.stringify(error.extensions.response.body))
+    }
+  }
+
+  async getInvites(event_id){
+    try{
+      return await this.get(`/events/${event_id}/invites`);
+    }catch(error){
+      throw Error(JSON.stringify(error.extensions.response.body))
+    }
+  }
+  
+  async getInvitedEvents(user_id){
+    try{
+      return await this.get(`/events/invited/${user_id}`);
+    }catch(error){
+      throw Error(JSON.stringify(error.extensions.response.body))
+    }
+  }
 }
 module.exports = eventsAPI;

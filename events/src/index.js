@@ -86,6 +86,60 @@ app.delete('/events/:id', async (req, res) => {
     }
 })
 
+// invite user to event 
+app.post('/events/:id/invite', async (req, res) => {
+    try{
+        const event_id = req.params.id
+        const users = req.body.users
+        if (!users) {
+            return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
+        }
+        const query = 'insert into aicte.invites (id,event_id,user_id,name,email,phone,createdat,updatedat) values (?,?,?,?,?,?,?,?)'
+        await users.forEach(async (user)=>{
+            const timestamp = new Date().toISOString()
+            const invite_id = uuid.v4()
+            // find user 
+            const find_user = `select * from aicte.invites where user_id = ? and event_id = ? allow filtering`
+            const user_data = (await db.execute(find_user,[user.id,event_id])).rows
+            console.log(user);
+            if (user_data.length > 0) return;
+            await db.execute(query,[invite_id,event_id,user.id,user.name,user.email,user.phone,timestamp,timestamp])
+        })
+        
+        return res.json(Response(200, 'Success', "Invites sent successfully"))
+    }catch(err){
+        return res.status(500).json(Response(500, 'Error', err))
+    }
+})
+
+// get invited users for event 
+app.get('/events/:id/invites', async (req, res) => {
+    try {
+        const query = 'select * from aicte.invites where event_id = ? allow filtering'
+        const data = (await db.execute(query,[req.params.id])).rows
+        return res.status(200).json(Response(200, 'Success', data))
+    } catch (error) {
+        return res.status(500).json(Response(500, 'Error', error))
+    }
+})
+
+// get events for users who are invited to event
+app.get('/events/invited/:user_id', async (req, res) => {
+    try {
+        const query = 'select * from aicte.invites where user_id = ? allow filtering'
+        const data = (await db.execute(query,[req.params.user_id])).rows
+        // find events from id's of events
+        const find_events = 'select * from aicte.events where id = ?'
+        const events = await Promise.all(data.map(async ({event_id})=>{
+            const event = (await db.execute(find_events,[event_id])).rows[0]
+            return event
+        }))
+        return res.status(200).json(Response(200, 'Success', events))
+    } catch (error) {
+        return res.status(500).json(Response(500, 'Error', error))
+    }
+})
+
 app.listen(process.env.PORT);
 
 console.log(`Events Server Up!!`);
