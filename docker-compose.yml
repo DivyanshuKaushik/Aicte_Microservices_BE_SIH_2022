@@ -35,6 +35,11 @@ services:
       - aicte.env
     networks:
       - aicte-network
+    depends_on:
+      - users
+      - events
+      - venue
+      - alerts
   users:
     container_name: users
     build: ./users
@@ -47,6 +52,8 @@ services:
       - aicte.env
     networks:
       - aicte-network
+    depends_on:
+      - kafka
   venue:
     container_name: venue
     build: ./venue
@@ -59,6 +66,8 @@ services:
       - aicte.env
     networks:
       - aicte-network
+    depends_on:
+      - kafka
   events:
     container_name: events
     build: ./events
@@ -71,18 +80,34 @@ services:
       - aicte.env
     networks:
       - aicte-network
-  mail_sms:
-    container_name: mail_sms
-    build: ./mail_sms
-    image: divyanshukaushik/mail_sms
+    depends_on:
+      - kafka
+  alerts:
+    container_name: alerts
+    build: ./alerts
+    image: divyanshukaushik/alerts
     ports:
       - 4004:4000
     volumes:
-      - ./mail_sms:/app
+      - ./alerts:/app
     env_file:
       - aicte.env
     networks:
       - aicte-network
+    depends_on:
+      - kafka
+  logs:
+    container_name: logs
+    build: ./logs
+    image: divyanshukaushik/logs
+    volumes:
+      - ./logs:/app
+    env_file:
+      - aicte.env
+    networks:
+      - aicte-network
+    depends_on:
+      - kafka
 networks:
   aicte-network:
     driver: bridge

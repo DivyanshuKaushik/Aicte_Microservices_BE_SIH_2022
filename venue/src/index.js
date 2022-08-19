@@ -2,10 +2,18 @@
 const express = require('express');
 const uuid = require('uuid');
 const { connectDB,db } = require('./db');
-const { Response } = require('./helpers');
+const { Response, alertProducer, logProducer } = require('./helpers');
 
 // connect to aws keyspaces 
 connectDB()
+
+// connect to kafka producers 
+async function connectProducers() {
+    await alertProducer.connect();
+    await logProducer.connect();
+    console.log("producer_connected");
+}
+connectProducers();
 
 const app = express();
 
@@ -47,6 +55,13 @@ app.get('/venues/:id', async (req, res) => {
 
 // register venue 
 app.post('/venues', async (req, res) => {
+    const user = JSON.parse(req.headers.user)
+    const log = {
+        type: 'venue_register',
+        message:"",
+        user_id: user.user_id,
+        user_name: user.user_name,
+    }
     try {
         let { name,email,phone,state,city,address,pincode,capacity,website,venue_head } = req.body
         if (!(name &&  email &&  phone && state && city && address && pincode && capacity && venue_head)){
@@ -57,16 +72,33 @@ app.post('/venues', async (req, res) => {
         const timestamp = new Date().toISOString()
         const save_venue = "insert into aicte.venues (id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,createdat,updatedat) values (?,?,?,?,?,?,?,?,?,?,?,?,?)"
         await db.execute(save_venue,[id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,timestamp,timestamp])
-        return res.json(Response(200, 'Success', { id, name, email, phone,venue_head,state, city, address, pincode, capacity, website, createdat:timestamp, updatedat:timestamp }))
+        log.message = `${name} registered`
+        res.json(Response(200, 'Success', { id, name, email, phone,venue_head,state, city, address, pincode, capacity, website, createdat:timestamp, updatedat:timestamp }))
     }
     catch (error) {
-        console.log(error);
-        return res.status(500).json(Response(500, 'Error', error))
+        // console.log(error);
+        log.message = "error in registering venue"
+        res.status(500).json(Response(500, 'Error', error))
     }
+    // log to db using kafka producer
+    await logProducer.send({
+        topic: 'log',
+        messages: [
+            { value: JSON.stringify(log) }
+        ]
+    })
+    return;
 });
 
 // update venue details
 app.put('/venues/:id', async (req, res) => {
+    const user = JSON.parse(req.headers.user)
+    const log = {
+        type: 'venue_register',
+        message:"",
+        user_id: user.user_id,
+        user_name: user.user_name,
+    }
     try {
         let { name,email,phone,state,city,address,pincode,capacity,website,venue_head,createdat } = req.body
         if (!(name &&  email &&  phone && state && city && address && pincode && capacity && venue_head && createdat)){
@@ -76,27 +108,61 @@ app.put('/venues/:id', async (req, res) => {
         const timestamp = new Date().toISOString()
         const update_venue = `update aicte.venues set name = ?,venue_head = ?,email = ?,phone = ?,state = ?,city = ?,address = ?,pincode = ?,capacity = ?,website = ?,updatedat = ? where id = ? and createdat = ?`
         await db.execute(update_venue,[name,venue_head,email,phone,state,city,address,pincode,capacity,website,timestamp,req.params.id,createdat])
-        return res.json(Response(200, 'Success', "Venue updated successfully"))
+        log.message = "venue updated with id "+req.params.id
+        res.json(Response(200, 'Success', "Venue updated successfully"))
     }
     catch (error) {
-        return res.status(500).json(Response(500, 'Error', error))
+        log.message = "error in updating venue with id "+req.params.id
+        res.status(500).json(Response(500, 'Error', error))
     }
+    // log to db using kafka producer
+    await logProducer.send({
+        topic: 'log',
+        messages: [
+            { value: JSON.stringify(log) }
+        ]
+    })
+    return;
 });
 
 // delete venue
 app.delete('/venues/:id', async (req, res) => {
+    const user = JSON.parse(req.headers.user)
+    const log = {
+        type: 'venue_delete',
+        message:"",
+        user_id: user.user_id,
+        user_name: user.user_name,
+    }
     try {
         const delete_venue = `delete from aicte.venues where id = ?`
         await db.execute(delete_venue,[req.params.id])
-        return res.json(Response(200, 'Success', "Venue deleted successfully"))
+        log.message = `venue deleted with id ${req.params.id}`
+        res.json(Response(200, 'Success', "Venue deleted successfully"))
     }
     catch (error) {
-        return res.status(500).json(Response(500, 'Error', error))
+        log.message = `error in deleting venue with id ${req.params.id}`
+        res.status(500).json(Response(500, 'Error', error))
     }
+    // log to db using kafka producer
+    await logProducer.send({
+        topic: 'log',
+        messages: [
+            { value: JSON.stringify(log) }
+        ]
+    })
+    return;
 })
 
 // book a venue for event 
 app.post('/venues/book',async(req,res)=>{
+    const user = JSON.parse(req.headers.user)
+    const log = {
+        type: 'venue_book',
+        message:"",
+        user_id: user.user_id,
+        user_name: user.user_name,
+    }
     try {
         const {event_id,venue_id,venue_head,from_date,to_date,time} = req.body
         const status = 'requested'
@@ -104,10 +170,20 @@ app.post('/venues/book',async(req,res)=>{
         const timestamp = new Date().toISOString()
         const query = "insert into aicte.bookings (id,event_id,venue_id,venue_head,from_date,to_date,time,status,createdat,updatedat) values (?,?,?,?,?,?,?,?,?,?)"
         await db.execute(query,[id,event_id,venue_id,venue_head,from_date,to_date,time,status,timestamp,timestamp])
-        return res.json(Response(200, 'Success', "Venue Requested for event"))
+        log.message = `venue(${venue_id}) booked for event with id ${event_id}`
+        res.json(Response(200, 'Success', "Venue Requested for event"))
     } catch (error) {
-        return res.status(500).json(Response(500, 'Error', error))
+        log.message = `error in booking venue with id ${req.params.id} for event with id ${req.params.id}`
+        res.status(500).json(Response(500, 'Error', error))
     }
+    // log to db using kafka producer
+    await logProducer.send({
+        topic: 'log',
+        messages: [
+            { value: JSON.stringify(log) }
+        ]
+    })
+    return;
 });
 
 // update booking status 

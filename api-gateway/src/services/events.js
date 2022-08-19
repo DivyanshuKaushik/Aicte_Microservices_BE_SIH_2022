@@ -1,5 +1,5 @@
 const { gql, UserInputError } = require("apollo-server-express");
-
+const {isAuthenticated} = require("../validators/auth");
 const typeDefs = gql`
     type Event{
         id: ID!
@@ -46,29 +46,33 @@ const typeDefs = gql`
 `
 const resolvers = {
     Query: {
-        getEvents: async(_, args, { dataSources }, info) => {
+        getEvents: async(_, args, { dataSources, req }, info) => {
             try {
+                req.user = await isAuthenticated(req)
                 return (await dataSources.eventsAPI.getEvents()).data;
             } catch (error) {
                 throw new Error(error);
             }
         },
-        async getEvent(_, args, { dataSources }, info) {
+        async getEvent(_, args, { dataSources, req }, info) {
             try {
+                req.user = await isAuthenticated(req)
                 return (await dataSources.eventsAPI.getEvent(args.id)).data;
             } catch (error) {
                 throw new Error(error.data);
             }
         },
-        async getInvites(_, args, { dataSources }, info) {
+        async getInvites(_, args, { dataSources, req }, info) {
             try {
+                req.user = await isAuthenticated(req)
                 return (await dataSources.eventsAPI.getInvites(args.event_id)).data;
             } catch (error) {
                 throw new Error(error.data);
             }
         },
-        async getInvitedEvents(_, args, { dataSources }, info) {
+        async getInvitedEvents(_, args, { dataSources, req }, info) {
             try {
+                req.user = await isAuthenticated(req)
                 return (await dataSources.eventsAPI.getInvitedEvents(args.user_id)).data;
             } catch (error) {
                 throw new Error(error.data);
@@ -76,29 +80,33 @@ const resolvers = {
         }
     },
     Mutation:{
-        async createEvent(_,args,{dataSources},info){
+        async createEvent(_,args,{dataSources,req},info){
             try{
+                req.user = await isAuthenticated(req)
                 return (await dataSources.eventsAPI.registerEvent(args)).data;
             }catch(err){
                 throw new UserInputError(err)
             }
         },
-        async updateEvent(_,args,{dataSources},info){
+        async updateEvent(_,args,{dataSources,req},info){
             try{
+                req.user = await isAuthenticated(req)
                 return (await dataSources.eventsAPI.updateEvent(args)).data;
             }catch(err){
                 throw new UserInputError(err)
             }
         },
-        async deleteEvent(_,args,{dataSources},info){
+        async deleteEvent(_,args,{dataSources,req},info){
             try{
+                req.user = await isAuthenticated(req)
                 return (await dataSources.eventsAPI.deleteEvent(args.id)).data;
             }catch(err){
                 throw new UserInputError(err)
             }
         },
-        async inviteUsers(_,args,{dataSources},info){
+        async inviteUsers(_,args,{dataSources,req},info){
             try{
+                req.user = await isAuthenticated(req)
                 return (await dataSources.eventsAPI.inviteUsers(args)).data;
             }catch(err){
                 throw new UserInputError(err)
