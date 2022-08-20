@@ -6,4 +6,6 @@ cd events && npm install && cd ..
 cd venue && npm install && cd ..
 cd alerts && npm install && cd ..
 cd logs && npm install && cd ..
+cd chat && npm install && cd ..
+cd socials && npm install && cd ..
 echo "Packages installed"

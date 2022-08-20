@@ -18,8 +18,12 @@ const db = new cassandra.Client({
     queryOptions: { consistency: cassandra.types.consistencies.localQuorum },
 });
 async function connectDB(){
-    await db.connect();
-    console.log('Connected to Cassandra');
+    try{
+        await db.connect();
+        console.log('Connected to Cassandra');
+    }catch(err){
+        console.log(error);
+    }
 }
 
 module.exports = {

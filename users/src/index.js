@@ -3,10 +3,17 @@ const express = require('express');
 const uuid = require('uuid');
 const bcrypt = require('bcryptjs')
 const { connectDB,db } = require('./db');
-const { Response } = require('./helpers');
+const { Response, alertProducer } = require('./helpers');
 
 // connect to aws keyspaces 
 connectDB()
+
+// connect to kafka producers 
+async function connectProducers() {
+    await alertProducer.connect();
+    console.log("producer_connected");
+}
+connectProducers();
 
 const app = express();
 
@@ -52,6 +59,7 @@ app.post('/users/login',async(req, res) => {
 app.post('/users', async(req, res) => {
     try{
         let { name, email, password,phone,role,department } = req.body
+        const unhashedPassword = password;
         if (!(name &&  email &&  password && phone && role && department)){
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
         }
@@ -65,6 +73,15 @@ app.post('/users', async(req, res) => {
         const timestamp = new Date().toISOString()
         const save_user = `insert into aicte.users (id,name,email,phone,role,password,department,createdAt,updatedAt) values (?,?,?,?,?,?,?,?,?)`
         await db.execute(save_user,[id,name, email,phone,role,password,department,timestamp,timestamp])
+        // send mail to user 
+        await alertProducer.send({
+            topic: 'alert',
+            messages: [{value: JSON.stringify({
+                email,
+                subject:`Welcome to AICTE Portal`,
+                text:`You have been registered to AICTE Portal. Please login to continue using credentials email: ${email} password:${unhashedPassword} Thank you.`
+            })}]
+        })
         res.json(Response(200, 'Success', { id, name, email, password,phone,role,department,createdAt:timestamp,updatedAt:timestamp }))
 
     }catch(err){

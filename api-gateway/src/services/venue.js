@@ -81,7 +81,7 @@ const resolvers = {
     Query: {
         getVenues: async (_, args, { dataSources,req }, info) => {
             try {
-                req.user = isAuthenticated(req)
+                req.user = await isAuthenticated(req)
                 return (await dataSources.venueAPI.getVenues()).data;
             } catch (error) {
                 throw new Error(error);
@@ -89,7 +89,7 @@ const resolvers = {
         },
         getVenuesByCity: async (_, { city }, { dataSources,req }, info) => {
             try {
-                req.user = isAuthenticated(req)
+                req.user = await isAuthenticated(req)
                 return (await dataSources.venueAPI.getVenuesByCity(city)).data;
             } catch (error) {
                 throw new Error(error);
@@ -97,10 +97,10 @@ const resolvers = {
         },
         async getVenue(_, args, { dataSources,req }, info) {
             try {
-                req.user = isAuthenticated(req)
+                req.user = await isAuthenticated(req)
                 return (await dataSources.venueAPI.getVenue(args.id)).data;
             } catch (error) {
-                throw new Error(error.data);
+                throw new Error(error);
             }
         },
         async getVenueBookingDetailsByBookingId(
@@ -110,7 +110,7 @@ const resolvers = {
             info
         ) {
             try {
-                req.user = isAuthenticated(req)
+                req.user = await isAuthenticated(req)
                 return (
                     await dataSources.venueAPI.getVenueBookingDetailsByBookingId(
                         args.id
@@ -122,7 +122,7 @@ const resolvers = {
         },
         async getVenueBookingDetailsByEventId(_, args, { dataSources,req }, info) {
             try {
-                req.user = isAuthenticated(req)
+                req.user = await isAuthenticated(req)
                 return (
                     await dataSources.venueAPI.getVenueBookingDetailsByEventId(
                         args.id
@@ -134,7 +134,7 @@ const resolvers = {
         },
         async getVenueBookings(_, args, { dataSources,req }, info) {
             try {
-                req.user = isAuthenticated(req)
+                req.user = await isAuthenticated(req)
                 return (await dataSources.venueAPI.getVenueBookings(args.id))
                     .data;
             } catch (error) {
@@ -145,7 +145,7 @@ const resolvers = {
     Mutation: {
         async registerVenue(_, args, { dataSources,req }, info) {
             try {
-                req.user = isAuthenticated(req)
+                req.user = await isAuthenticated(req)
                 return (await dataSources.venueAPI.registerVenue(args)).data;
             } catch (err) {
                 throw new UserInputError(err);
@@ -153,7 +153,7 @@ const resolvers = {
         },
         async updateVenue(_, args, { dataSources,req }, info) {
             try {
-                req.user = isAuthenticated(req)
+                req.user = await isAuthenticated(req)
                 return (await dataSources.venueAPI.updateVenue(args)).data;
             } catch (err) {
                 throw new UserInputError(err);
@@ -161,7 +161,7 @@ const resolvers = {
         },
         async deleteVenue(_, args, { dataSources,req }, info) {
             try {
-                req.user = isAuthenticated(req)
+                req.user = await isAuthenticated(req)
                 return (await dataSources.venueAPI.deleteVenue(args.id)).data;
             } catch (err) {
                 throw new UserInputError(err);
@@ -169,7 +169,7 @@ const resolvers = {
         },
         async requestVenue(_, args, { dataSources,req }, info) {
             try {
-                req.user = isAuthenticated(req)
+                req.user = await isAuthenticated(req)
                 return (await dataSources.venueAPI.requestVenue(args)).data;
             } catch (err) {
                 throw new UserInputError(err);
@@ -177,7 +177,7 @@ const resolvers = {
         },
         async updateVenueStatus(_, args, { dataSources,req }, info) {
             try {
-                req.user = isAuthenticated(req)
+                req.user = await isAuthenticated(req)
                 return (await dataSources.venueAPI.updateVenueStatus(args))
                     .data;
             } catch (err) {

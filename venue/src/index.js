@@ -94,7 +94,7 @@ app.post('/venues', async (req, res) => {
 app.put('/venues/:id', async (req, res) => {
     const user = JSON.parse(req.headers.user)
     const log = {
-        type: 'venue_register',
+        type: 'venue_update',
         message:"",
         user_id: user.user_id,
         user_name: user.user_name,
@@ -171,6 +171,16 @@ app.post('/venues/book',async(req,res)=>{
         const query = "insert into aicte.bookings (id,event_id,venue_id,venue_head,from_date,to_date,time,status,createdat,updatedat) values (?,?,?,?,?,?,?,?,?,?)"
         await db.execute(query,[id,event_id,venue_id,venue_head,from_date,to_date,time,status,timestamp,timestamp])
         log.message = `venue(${venue_id}) booked for event with id ${event_id}`
+        const venue = (await db.execute(`select * from aicte.venues where id = ?`,[venue_id])).rows[0]
+        const event = (await db.execute(`select * from aicte.events where id = ?`,[event_id])).rows[0]
+        await alertProducer.send({
+            topic: 'alert',
+            messages: [{value: JSON.stringify({
+                email: venue.email,
+                subject:`${event.name} requested for booking ${venue.name}`,
+                text:`${venue.name} has been requested for booking for "${event.name}" from ${from_date} to ${to_date} at ${time} please log on to portal to update status.`
+            })}]
+        })
         res.json(Response(200, 'Success', "Venue Requested for event"))
     } catch (error) {
         log.message = `error in booking venue with id ${req.params.id} for event with id ${req.params.id}`
@@ -188,15 +198,32 @@ app.post('/venues/book',async(req,res)=>{
 
 // update booking status 
 app.put('/venues/book/status',async(req,res)=>{
+    const user = JSON.parse(req.headers.user)
+    const log = {
+        type: 'venue_book',
+        message:"",
+        user_id: user.user_id,
+        user_name: user.user_name,
+    }
     try {
         const {status,id,createdat} = req.body
         const timestamp = new Date().toISOString()
         const query = "update aicte.bookings set status = ?,updatedat = ? where id = ? and createdat = ?"
         await db.execute(query,[status,timestamp,id,createdat])
-        return res.json(Response(200, 'Success', `Venue ${status} for event`))
+        log.message = `venue booking with id ${id} updated to ${status}`
+        res.json(Response(200, 'Success', `Venue ${status} for event`))
     } catch (error) {
-        return res.status(500).json(Response(500, 'Error', error))
+        log.message = `error in updating venue booking with id ${req.params.id} to ${status}`
+        res.status(500).json(Response(500, 'Error', error))
     }
+    // log to db using kafka producer
+    await logProducer.send({
+        topic: 'log',
+        messages: [
+            { value: JSON.stringify(log) }
+        ]
+    })
+    return;
 })
 
 // get booking updates 
