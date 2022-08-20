@@ -26,7 +26,7 @@ services:
   api-gateway:
     container_name: api-gateway
     build: ./api-gateway
-    image: divyanshukaushik/api-gateway
+    # image: divyanshukaushik/api-gateway
     ports:
       - "4000:4000"
     volumes:
@@ -43,7 +43,7 @@ services:
   users:
     container_name: users
     build: ./users
-    image: divyanshukaushik/users
+    # image: divyanshukaushik/users
     ports:
       - 4001:4000
     volumes:
@@ -57,7 +57,7 @@ services:
   venue:
     container_name: venue
     build: ./venue
-    image: divyanshukaushik/venue
+    # image: divyanshukaushik/venue
     ports:
       - 4002:4000
     volumes:
@@ -71,7 +71,7 @@ services:
   events:
     container_name: events
     build: ./events
-    image: divyanshukaushik/events
+    # image: divyanshukaushik/events
     ports:
       - 4003:4000
     volumes:
@@ -85,7 +85,7 @@ services:
   alerts:
     container_name: alerts
     build: ./alerts
-    image: divyanshukaushik/alerts
+    # image: divyanshukaushik/alerts
     ports:
       - 4004:4000
     volumes:
@@ -99,7 +99,7 @@ services:
   logs:
     container_name: logs
     build: ./logs
-    image: divyanshukaushik/logs
+    # image: divyanshukaushik/logs
     ports:
       - 4005:4000
     volumes:
@@ -113,7 +113,7 @@ services:
   socials:
     container_name: socials
     build: ./socials
-    image: divyanshukaushik/socials
+    # image: divyanshukaushik/socials
     ports:
       - 4006:4000
     volumes:
@@ -127,7 +127,7 @@ services:
   chat:
     container_name: chat
     build: ./chat
-    image: divyanshukaushik/chat
+    # image: divyanshukaushik/chat
     ports:
       - 4007:4000
     volumes:
