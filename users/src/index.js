@@ -10,8 +10,12 @@ connectDB()
 
 // connect to kafka producers 
 async function connectProducers() {
-    await alertProducer.connect();
-    console.log("producer_connected");
+    try{
+        await alertProducer.connect();
+        console.log("producer_connected");
+    }catch(err){
+        console.log(err);
+    }
 }
 connectProducers();
 
