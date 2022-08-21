@@ -161,10 +161,12 @@ app.post('/events/:id/invite', async (req, res) => {
         }
         // only email of users for mass mail
         const emails = []
+        const phones = []
         // save to db 
         const query = 'insert into aicte.invites (id,event_id,user_id,name,email,phone,createdat,updatedat) values (?,?,?,?,?,?,?,?)'
         await users.forEach(async (user)=>{
             emails.push(user.email)
+            phones.push(user.phone)
             const timestamp = new Date().toISOString()
             const invite_id = uuid.v4()
             // find user 
@@ -210,7 +212,18 @@ app.post('/events/:id/invite', async (req, res) => {
                 messages: [{value:JSON.stringify(msg)}],
             })
         }
-
+        // send sms to every invited user using kafka producer
+        phones.forEach(async(phone) => {
+            await alertProducer.send({
+                topic:"sms",
+                messages:[{
+                    value:JSON.stringify({
+                        phone:phone,
+                        text:`You have been invited to ${event.name} on ${event.from_date} at ${event.time} Venue details are as follows: ${venue.name} ${venue.address} ${venue.city} ${venue.state} ${venue.pincode} website: ${venue.website}`
+                    })
+                }]
+            })
+        });
         log.message = `invited users to event with id ${event_id}`
         res.json(Response(200, 'Success', "Invites sent successfully"))
     }catch(err){

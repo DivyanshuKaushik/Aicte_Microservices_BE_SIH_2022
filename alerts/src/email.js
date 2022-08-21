@@ -1,5 +1,5 @@
 const { consumer } = require("./helpers");
-const { send_email, mass_mailer } = require("./ses");
+const { send_email, mass_mailer, send_sms } = require("./ses");
 
 // connect consumer 
 async function connectConsumer() {
@@ -9,11 +9,11 @@ async function connectConsumer() {
 
 // alert mail consumer 
 async function consume_alert() {
-    await consumer.subscribe({ topics: ["alert","mass_mail"], fromBeginning: true });
+    await consumer.subscribe({ topics: ["alert","mass_mail","sms"], fromBeginning: true });
     await consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
             const { value } = message;
-            const { email,subject,text} = JSON.parse(value);
+            const { email,subject,text,phone} = JSON.parse(value);
             switch (topic) {
                 case "alert":
                     // console.log(email,subject,text,topic);
@@ -22,6 +22,10 @@ async function consume_alert() {
                 case "mass_mail":
                     // console.log(email,topic);
                     await mass_mailer(email,subject,text);
+                    return;
+                case "sms":
+                    console.log(phone,text,topic);
+                    await send_sms(phone,text)
                     return;
                 default:
                     return;

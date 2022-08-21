@@ -11,6 +11,7 @@ const typeDefs = gql`
         state: String!
         address: String!
         pincode: String!
+        image: String!
         capacity: String!
         website: String
         venue_head: ID!
@@ -48,6 +49,7 @@ const typeDefs = gql`
             state: String!
             address: String!
             pincode: String!
+            image: String!
             capacity: String!
             website: String
         ): Venue

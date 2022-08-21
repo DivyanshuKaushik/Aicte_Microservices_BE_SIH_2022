@@ -67,17 +67,17 @@ app.post('/venues', async (req, res) => {
         user_name: user.user_name,
     }
     try {
-        let { name,email,phone,state,city,address,pincode,capacity,website,venue_head } = req.body
-        if (!(name &&  email &&  phone && state && city && address && pincode && capacity && venue_head)){
+        let { name,email,phone,state,city,address,pincode,capacity,website,venue_head,image } = req.body
+        if (!(name &&  email &&  phone && state && city && address && pincode && capacity && venue_head && image)){
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
         }
         website = website ? website : ''
         const id = uuid.v4()
         const timestamp = new Date().toISOString()
-        const save_venue = "insert into aicte.venues (id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,createdat,updatedat) values (?,?,?,?,?,?,?,?,?,?,?,?,?)"
-        await db.execute(save_venue,[id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,timestamp,timestamp])
+        const save_venue = "insert into aicte.venues (id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,createdat,updatedat,image) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+        await db.execute(save_venue,[id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,timestamp,timestamp,image])
         log.message = `${name} registered`
-        res.json(Response(200, 'Success', { id, name, email, phone,venue_head,state, city, address, pincode, capacity, website, createdat:timestamp, updatedat:timestamp }))
+        res.json(Response(200, 'Success', { id, name,image, email, phone,venue_head,state, city, address, pincode, capacity, website, createdat:timestamp, updatedat:timestamp }))
     }
     catch (error) {
         // console.log(error);
