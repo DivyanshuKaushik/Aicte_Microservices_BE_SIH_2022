@@ -63,8 +63,8 @@ app.post('/venues', async (req, res) => {
     const log = {
         type: 'venue_register',
         message:"",
-        user_id: user.user_id,
-        user_name: user.user_name,
+        user_id: user.id,
+        user_name: user.name,
     }
     try {
         let { name,email,phone,state,city,address,pincode,capacity,website,venue_head,image } = req.body
@@ -75,7 +75,7 @@ app.post('/venues', async (req, res) => {
         const id = uuid.v4()
         const timestamp = new Date().toISOString()
         const save_venue = "insert into aicte.venues (id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,createdat,updatedat,image) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
-        await db.execute(save_venue,[id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,timestamp,timestamp,image])
+        // await db.execute(save_venue,[id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,timestamp,timestamp,image])
         log.message = `${name} registered`
         res.json(Response(200, 'Success', { id, name,image, email, phone,venue_head,state, city, address, pincode, capacity, website, createdat:timestamp, updatedat:timestamp }))
     }
@@ -100,8 +100,8 @@ app.put('/venues/:id', async (req, res) => {
     const log = {
         type: 'venue_update',
         message:"",
-        user_id: user.user_id,
-        user_name: user.user_name,
+        user_id: user.id,
+        user_name: user.name,
     }
     try {
         let { name,email,phone,state,city,address,pincode,capacity,website,venue_head,createdat } = req.body
@@ -135,8 +135,8 @@ app.delete('/venues/:id', async (req, res) => {
     const log = {
         type: 'venue_delete',
         message:"",
-        user_id: user.user_id,
-        user_name: user.user_name,
+        user_id: user.id,
+        user_name: user.name,
     }
     try {
         const delete_venue = `delete from aicte.venues where id = ?`
@@ -164,8 +164,8 @@ app.post('/venues/book',async(req,res)=>{
     const log = {
         type: 'venue_book',
         message:"",
-        user_id: user.user_id,
-        user_name: user.user_name,
+        user_id: user.id,
+        user_name: user.name,
     }
     try {
         const {event_id,venue_id,venue_head,from_date,to_date,time} = req.body
@@ -206,8 +206,8 @@ app.put('/venues/book/status',async(req,res)=>{
     const log = {
         type: 'venue_book',
         message:"",
-        user_id: user.user_id,
-        user_name: user.user_name,
+        user_id: user.id,
+        user_name: user.name,
     }
     try {
         const {status,id,createdat} = req.body

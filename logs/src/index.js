@@ -30,6 +30,7 @@ async function logs(){
     await consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
             const log = JSON.parse(message.value.toString());
+            console.log(log)
             const timestamp = new Date().toISOString();
             const query = 'insert into aicte.logs (id,type,message,user_id,user_name,timestamp) values (?,?,?,?,?,?)';
             await db.execute(query,[uuid.v4(),log.type,log.message,log.user_id,log.user_name,timestamp]);
@@ -56,6 +57,7 @@ app.get('/logs', async(req, res) => {
         logs = logs.sort(function(x, y){
             return new Date(y.timestamp).getTime() - new Date(x.timestamp).getTime();
         })
+        // console.log(logs);
         return res.status(200).json(Response(200, 'Success', logs))
     }catch(error){
         console.log(error);

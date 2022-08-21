@@ -4,17 +4,17 @@ const { isAuthenticated } = require("../validators/auth");
 const typeDefs = gql`
     type Log{
         id: ID!
-        type: String!
-        message: String!
-        user_id: ID!
-        user_name: String!
         timestamp: String!
+        user_id: ID
+        user_name: String
+        message: String!
+        type: String!
     }
     extend type Query {
         getLogs: [Log]!
-        getLogsByDate(date:String!): [Log]!
-        getLogsByMonth(year_month:String!): [Log]!
-        getLogsByYear(year:String!): [Log]!
+        getLogsByDate(date:String!): [Log]
+        getLogsByMonth(year_month:String!): [Log]
+        getLogsByYear(year:String!): [Log]
     }
 `
 const resolvers = {
