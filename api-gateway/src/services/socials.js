@@ -8,7 +8,7 @@ const typeDefs = gql`
     extend type Mutation{
         fbGetLongLivedAccessToken(shortlivedaccesstoken: String!): String!
         fbPageData(id:String!,pageaccesstoken:String!): String!
-        fbUploadPost(url:String!,caption:String!,pageid:String!,pageaccesstoken:String!): String!
+        fbUploadPost(url:String,caption:String,pageid:String!,pageaccesstoken:String!): String!
     }
 `
 const resolvers = {
