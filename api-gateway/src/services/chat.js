@@ -8,6 +8,7 @@ const typeDefs = gql`
         by_user: ID!
         message: String!
         createdAt: String!
+        updatedAt: String!
     }
 
     type CommonChat{
@@ -17,6 +18,7 @@ const typeDefs = gql`
         user_email: String!
         message: String!
         createdAt: String!
+        updatedAt: String!
     }
     type Inbox{
         _id: ID!
@@ -26,6 +28,7 @@ const typeDefs = gql`
         user2_name: String!
         lastmessage: String!
         createdAt: String!
+        updatedAt: String!
     }
     
     extend type Query {

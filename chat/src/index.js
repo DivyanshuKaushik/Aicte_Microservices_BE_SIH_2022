@@ -60,7 +60,7 @@ const ChatInbox = mongoose.model("ChatInbox", chatInboxSchema);
 app.get('/inbox',async(req,res)=>{
     try{
         const user = JSON.parse(req.headers.user);
-        const inbox = await ChatInbox.find({$or:[{user1:user.id},{user2:user.id}]});
+        const inbox = await ChatInbox.find({$or:[{user1:user.id},{user2:user.id}]}).sort({updatedAt:-1});
         return res.status(200).json(Response(200,"success",inbox));
     }catch(err){
         return res.status(500).json(Response(500, "Error", error));
