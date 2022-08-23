@@ -155,9 +155,18 @@ app.post('/events/:id/invite', async (req, res) => {
     try{
         const event_id = req.params.id
         const event = (await db.execute('select * from aicte.events where id = ?',[event_id])).rows[0] 
-        const users = req.body.users
+        let {users,departments} = req.body
         if (!users) {
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
+        }
+        // add user by departments 
+        if(departments){
+            await departments.forEach(async(dept)=>{
+                const dept_user = (await db.execute('select * from aicte.users where department = ? allow filtering',[dept])).rows
+                dept_user.forEach(({id,name,phone,email})=>{
+                    users.push({id,name,phone,email})
+                })
+            })
         }
         // only email of users for mass mail
         const emails = []

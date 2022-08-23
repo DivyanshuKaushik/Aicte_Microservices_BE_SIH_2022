@@ -56,6 +56,7 @@ const typeDefs = gql`
 
     extend type Query {
         getVenues: [Venue]
+        getVenuesByHead(id:ID!): [Venue]
         getVenuesByCity(city: String!): [Venue]
         getVenue(id: ID!): Venue
         getVenueBookingDetailsByBookingId(id: ID!): Booking!
@@ -128,6 +129,14 @@ const resolvers = {
             try {
                 req.user = await isAuthenticated(req)
                 return (await dataSources.venueAPI.getVenue(args.id)).data;
+            } catch (error) {
+                throw new Error(error);
+            }
+        },
+        async getVenuesByHead(_, args, { dataSources,req }, info) {
+            try {
+                req.user = await isAuthenticated(req)
+                return (await dataSources.venueAPI.getVenuesByHead(args.id)).data;
             } catch (error) {
                 throw new Error(error);
             }

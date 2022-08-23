@@ -19,7 +19,9 @@ class venueAPI extends RESTDataSource {
   async getVenue(id){
     return await this.get(`/venues/${id}`);
   }
-
+  async getVenuesByHead(id){
+    return await this.get(`/venues/head/${id}`);
+  }
   async registerVenue(venue){
     try {
       return await this.post(`/venues`,venue)

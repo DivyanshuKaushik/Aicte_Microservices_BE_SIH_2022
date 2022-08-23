@@ -56,6 +56,16 @@ app.get('/venues/:id', async (req, res) => {
     }
 });
 
+// get venues by venue head 
+app.get('/venues/head/:id',async(req,res)=>{
+    try {
+        const query = 'select * from aicte.venues where venue_head = ? allow filtering'
+        const data = (await db.execute(query,[req.params.id])).rows[0]
+        return res.status(200).json(Response(200, 'Success', data))
+    } catch (error) {
+        return res.status(500).json(Response(500, 'Error', error))
+    }
+})
 
 // register venue 
 app.post('/venues', async (req, res) => {
@@ -212,8 +222,8 @@ app.put('/venues/book/status',async(req,res)=>{
     try {
         const {status,id,createdat} = req.body
         const timestamp = new Date().toISOString()
-        const query = "update aicte.bookings set status = ?,updatedat = ? where id = ?"
-        await db.execute(query,[status,timestamp,id])
+        const query = "update aicte.bookings set status = ?,updatedat = ? where id = ? and createdat = ?"
+        await db.execute(query,[status,timestamp,id,createdat])
         // const query = "update aicte.bookings set status = ?,updatedat = ? where id = ? and createdat = ?"
         // await db.execute(query,[status,timestamp,id,createdat])
         const booking = (await db.execute('select * from aicte.bookings where id = ?',[id])).rows[0]

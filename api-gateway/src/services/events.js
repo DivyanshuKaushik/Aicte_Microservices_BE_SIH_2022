@@ -64,7 +64,7 @@ const typeDefs = gql`
     createEvent(name:String!,description:String!,organiser:String!,food_req:String!,expected_count:String!,caption:String!,status:String!,from_date:String!,to_date:String!,time:String!,image:String!): Event
     updateEvent(id:ID!,name:String!,description:String!,,organiser:String!caption:String!,status:String!,from_date:String!,to_date:String!,time:String!,image:String!): String! 
     deleteEvent(id:ID!): String! 
-    inviteUsers(event_id:ID!,users:[InviteUser]): String!
+    inviteUsers(event_id:ID!,departments:[String],users:[InviteUser]): String!
     assignTasks(event_id:ID!,tasks:[TaskInput]): String!
   }
 `
