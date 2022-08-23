@@ -4,15 +4,16 @@ const { isAuthenticated, isAdmin } = require("../validators/auth");
 
 const typeDefs = gql`
     type User{
-        id: ID!
-        name: String!
-        email: String!
-        phone: String!
-        role: String!
-        password: String!
-        department: String!
-        createdat: String!
-        updatedat: String!
+        id: ID
+        name: String
+        email: String
+        phone: String
+        role: String
+        password: String
+        department: String
+        createdat: String
+        updatedat: String
+        image: String
     }
     type AuthUser{
         id: ID!
@@ -28,6 +29,7 @@ const typeDefs = gql`
     extend type Query {
         getUsers: [User]
         getUser(id: ID!): User
+        getUsersByDepartment(department:String!) : [User]
     }
     extend type Mutation{
     registerUser( email: String!, phone: String!, name: String!, department:String!, role: String, password: String!): User
@@ -35,6 +37,7 @@ const typeDefs = gql`
     updateUser(id:ID!,name:String!,email:String,role:String!,department:String!,phone:String!): String! 
     updatePassword(id:ID!,password:String!): String!
     deleteUser(id:ID!): String! 
+    updateProfileImage(id:ID!,image:String!) : String!
   }
 `
 const resolvers = {
@@ -52,6 +55,14 @@ const resolvers = {
             try {
                 req.user = await isAuthenticated(req)
                 return (await dataSources.usersAPI.getUser(args.id)).data;
+            } catch (error) {
+                throw new Error(error);
+            }
+        },
+        async getUsersByDepartment(_,{department},{dataSources,req}){
+            try {
+                req.user = await isAuthenticated(req)
+                return (await dataSources.usersAPI.getUsersByDepartment(department)).data;
             } catch (error) {
                 throw new Error(error);
             }
@@ -96,6 +107,14 @@ const resolvers = {
             try{
                 req.user = await isAdmin(req)
                 return (await dataSources.usersAPI.deleteUser(args.id)).data;
+            }catch(err){
+                throw new UserInputError(err)
+            }
+        },
+        async updateProfileImage(_,args,{dataSources,req},info){
+            try{
+                req.user = await isAuthenticated(req)
+                return (await dataSources.usersAPI.updateUserProfile(args)).data;
             }catch(err){
                 throw new UserInputError(err)
             }

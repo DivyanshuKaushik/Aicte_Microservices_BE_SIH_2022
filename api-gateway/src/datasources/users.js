@@ -16,7 +16,9 @@ class usersAPI extends RESTDataSource {
   async getUser(id){
     return await this.get(`/users/${id}`);
   }
-  
+  async getUsersByDepartment(department){
+    return await this.get(`/users?department=${department}`)
+  }
   async loginUser(user){
     try {
       return await this.post(`/users/login`,user);
@@ -39,7 +41,13 @@ class usersAPI extends RESTDataSource {
       throw Error(JSON.stringify(error.extensions.response.body))
     }
   }
-
+  async updateUserProfile(args){
+    try {
+      return await this.put(`/users/profile/${args.id}`,args)
+    } catch (error) {
+      throw Error(JSON.stringify(error.extensions.response.body))
+    }
+  }
   async updatePassword(id,password){
     try {
       return await this.put(`/users/${id}/password`,{password})

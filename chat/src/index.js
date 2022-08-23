@@ -25,6 +25,13 @@ mongoose
     })
     .then(() => console.log("mongo_connected"))
     .catch((err) => console.log(err));
+// mongoose
+//     .connect("mongodb://mongo:27017/aicte", {
+//         useNewUrlParser: true,
+//         useUnifiedTopology: true,
+//     })
+//     .then(() => console.log("mongo_connected"))
+//     .catch((err) => console.log(err));
 
 // mongo model for chats
 const chatSchema = new mongoose.Schema({

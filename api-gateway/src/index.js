@@ -6,6 +6,7 @@ const { ApolloServer } = require("apollo-server-express");
 // const {useServer} = require('graphql-ws/lib/use/ws')
 const {
   ApolloServerPluginLandingPageGraphQLPlayground,
+  ApolloServerPluginLandingPageLocalDefault
 } = require("apollo-server-core");
 const { PubSub } = require("graphql-subscriptions");
 // data sources 
@@ -44,6 +45,7 @@ async function start() {
     context: ({ req, }) => ({ req,pubsub }),
     plugins: [
         ApolloServerPluginLandingPageGraphQLPlayground(),
+        // ApolloServerPluginLandingPageLocalDefault()
       // {
       //   async serverWillStart() {
       //     return {

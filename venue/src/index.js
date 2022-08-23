@@ -67,17 +67,17 @@ app.post('/venues', async (req, res) => {
         user_name: user.name,
     }
     try {
-        let { name,email,phone,state,city,address,pincode,capacity,website,venue_head,image } = req.body
-        if (!(name &&  email &&  phone && state && city && address && pincode && capacity && venue_head && image)){
+        let { name,email,phone,state,city,address,pincode,capacity,website,venue_head,image,canteen_menu,canteen_contact } = req.body
+        if (!(name &&  email &&  phone && state && city && address && pincode && capacity && venue_head && image && canteen_menu&&canteen_contact)){
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
         }
         website = website ? website : ''
         const id = uuid.v4()
         const timestamp = new Date().toISOString()
-        const save_venue = "insert into aicte.venues (id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,createdat,updatedat,image) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
-        // await db.execute(save_venue,[id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,timestamp,timestamp,image])
+        const save_venue = "insert into aicte.venues (id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,canteen_menu,canteen_contact,createdat,updatedat,image) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+        await db.execute(save_venue,[id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,canteen_menu,canteen_contact,timestamp,timestamp,image])
         log.message = `${name} registered`
-        res.json(Response(200, 'Success', { id, name,image, email, phone,venue_head,state, city, address, pincode, capacity, website, createdat:timestamp, updatedat:timestamp }))
+        res.json(Response(200, 'Success', { id, name,image, email, phone,venue_head,state, city, address, pincode, capacity, website,canteen_menu,canteen_contact, createdat:timestamp, updatedat:timestamp }))
     }
     catch (error) {
         // console.log(error);
@@ -104,14 +104,14 @@ app.put('/venues/:id', async (req, res) => {
         user_name: user.name,
     }
     try {
-        let { name,email,phone,state,city,address,pincode,capacity,website,venue_head,createdat } = req.body
-        if (!(name &&  email &&  phone && state && city && address && pincode && capacity && venue_head && createdat)){
+        let { name,email,phone,state,city,address,pincode,capacity,website,venue_head,canteen_menu,canteen_contact,createdat } = req.body
+        if (!(name &&  email &&  phone && state && city && address && pincode && capacity && venue_head && createdat&&canteen_menu&&canteen_contact)){
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
         }
         website = website ? website : ''
         const timestamp = new Date().toISOString()
-        const update_venue = `update aicte.venues set name = ?,venue_head = ?,email = ?,phone = ?,state = ?,city = ?,address = ?,pincode = ?,capacity = ?,website = ?,updatedat = ? where id = ? and createdat = ?`
-        await db.execute(update_venue,[name,venue_head,email,phone,state,city,address,pincode,capacity,website,timestamp,req.params.id,createdat])
+        const update_venue = `update aicte.venues set name = ?,venue_head = ?,email = ?,phone = ?,state = ?,city = ?,address = ?,pincode = ?,capacity = ?,website = ?,canteen_menu = ?,canteen_contact = ?,updatedat = ? where id = ? and createdat = ?`
+        await db.execute(update_venue,[name,venue_head,email,phone,state,city,address,pincode,capacity,website,canteen_menu,canteen_contact,timestamp,req.params.id,createdat])
         log.message = "venue updated with id "+req.params.id
         res.json(Response(200, 'Success', "Venue updated successfully"))
     }
@@ -212,12 +212,42 @@ app.put('/venues/book/status',async(req,res)=>{
     try {
         const {status,id,createdat} = req.body
         const timestamp = new Date().toISOString()
-        const query = "update aicte.bookings set status = ?,updatedat = ? where id = ? and createdat = ?"
-        await db.execute(query,[status,timestamp,id,createdat])
+        const query = "update aicte.bookings set status = ?,updatedat = ? where id = ?"
+        await db.execute(query,[status,timestamp,id])
+        // const query = "update aicte.bookings set status = ?,updatedat = ? where id = ? and createdat = ?"
+        // await db.execute(query,[status,timestamp,id,createdat])
+        const booking = (await db.execute('select * from aicte.bookings where id = ?',[id])).rows[0]
+        const event = (await db.execute('select * from aicte.events where id = ?',[booking.event_id])).rows[0]
+        const venue = (await db.execute('select * from aicte.venues where id = ?',[booking.venue_id])).rows[0]
+        const event_org = (await db.execute('select * from aicte.users where id = ?',[event.organiser])).rows[0]
+        // send status update mails 
+        // if approved send food req to canteen manager of venue 
+        if(status.toLowerCase()=='approved'){
+            await alertProducer.send({
+                topic: 'alert',
+                messages: [{value: JSON.stringify({
+                    email: venue.canteen_contact,
+                    subject:`Food requirements for ${event.name}`,
+                    text:`Here is the food menu need to prepared for ${event.name} at ${venue.name}. The menu is ${event.food_req}`
+                })}]
+            })
+        }else if(status.toLowerCase()==='rejected'){
+            await alertProducer.send({
+                topic: 'alert',
+                
+                messages: [{value: JSON.stringify({
+                    email: event_org.email,
+                    subject:`Your request to book ${venue.name} has been rejected`,
+                    text:`${venue.name} has been rejected for booking for "${event.name}" from ${event.from_date} to ${event.to_date} at ${event.time}. Sorry for the inconvinience`
+                })}]
+            })
+        }
+        // if reject send mail to event organisers 
         log.message = `venue booking with id ${id} updated to ${status}`
         res.json(Response(200, 'Success', `Venue ${status} for event`))
     } catch (error) {
-        log.message = `error in updating venue booking with id ${req.params.id} to ${status}`
+        console.log(error);
+        log.message = `error in updating venue booking with id ${req.params.id}}`
         res.status(500).json(Response(500, 'Error', error))
     }
     // log to db using kafka producer
@@ -234,15 +264,15 @@ app.put('/venues/book/status',async(req,res)=>{
 app.get('/venues/booking/details',async(req,res)=>{
     try {
         const {event_id,booking_id} = req.query
-        let data;
+        let booking_data;
         if(event_id){
             const query = "select * from aicte.bookings where event_id = ? allow filtering"
-            data = (await db.execute(query,[event_id])).rows[0]
+            booking_data = (await db.execute(query,[event_id])).rows[0]
         }else{
             const query = "select * from aicte.bookings where id = ?"
-            data = (await db.execute(query,[booking_id])).rows[0]
+            booking_data = (await db.execute(query,[booking_id])).rows[0]
         }
-        return res.json(Response(200, 'Success', data))
+        return res.json(Response(200, 'Success', booking_data))
     } catch (error) {
         return res.status(500).json(Response(500, 'Error', error))
     }
@@ -254,8 +284,19 @@ app.get('/venues/bookings/:id',async(req,res)=>{
         const {id} = req.params
         const query = "select * from aicte.bookings where venue_id = ? allow filtering"
         const data = (await db.execute(query,[id])).rows
-        return res.json(Response(200, 'Success', data))
+        // console.log("data",data);
+        const result = []
+        for (let index = 0; index < data.length; index++) {
+            const event = (await db.execute("select * from aicte.events where id = ?",[data[index].event_id])).rows[0]
+            result.push({event,booking:data[0]})
+        }
+        // await data.forEach(async(booking)=>{
+        //     // console.log(booking,booking.id.toString());
+        // })
+        // console.log(result);
+        return res.json(Response(200, 'Success', result))
     } catch (error) {
+        console.log(error);
         return res.status(500).json(Response(500, 'Error', error))
     }
 })

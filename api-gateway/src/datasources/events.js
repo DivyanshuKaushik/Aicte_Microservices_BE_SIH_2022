@@ -64,5 +64,27 @@ class eventsAPI extends RESTDataSource {
       throw Error(JSON.stringify(error.extensions.response.body))
     }
   }
+  async assignTasks(data){
+    try{
+      return await this.post(`/events/assigntasks`,data);
+    }catch(error){
+      throw Error(JSON.stringify(error.extensions.response.body))
+    }
+  }
+  async getTasksByEvent(event_id){
+    try{
+      return await this.get(`/events/tasks/event/${event_id}`);
+    }catch(error){
+      throw Error(JSON.stringify(error.extensions.response.body))
+    }
+  }
+  async getTasksByUser(user_id){
+    console.log("user",user_id);
+    try{
+      return await this.get(`/events/tasks/user/${user_id}`);
+    }catch(error){
+      throw Error(JSON.stringify(error.extensions.response.body))
+    }
+  }
 }
 module.exports = eventsAPI;

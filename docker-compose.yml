@@ -136,6 +136,33 @@ services:
       - aicte.env
     networks:
       - aicte-network
+  mongo:
+    container_name: mongo
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/mongo:/data/db
+    networks:
+      - aicte-network 
+  mongo-express:
+    container_name: mongo-express
+    image: mongo-express
+    depends_on:
+      - mongo
+    ports:
+      - "8888:8081"
+    networks:
+      - aicte-network  
+  cassandra:
+    image: cassandra
+    ports:
+      - "9042:9042"
+    volumes:
+      - ./data/cassandra:/var/lib/cassandra
+    networks:
+      - aicte-network
+    restart: always
 networks:
   aicte-network:
     driver: bridge

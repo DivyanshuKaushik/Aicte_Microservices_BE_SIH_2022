@@ -8,6 +8,12 @@ const sslOptions1 = {
     host: process.env.CASSANDRA_HOST,
     rejectUnauthorized: true,
 };
+const client = new cassandra.Client({
+    contactPoints: ["cassandra"],
+    localDataCenter: "datacenter1",
+    keyspace: "aicte",
+    credentials: { username: "admin", password: "admin123" },
+  });
 
 const db = new cassandra.Client({
     contactPoints: [process.env.CASSANDRA_HOST],
@@ -21,12 +27,12 @@ async function connectDB(){
     try{
         await db.connect();
         console.log('Connected to Cassandra');
-    }catch(err){
+        // await client.connect()
+    }catch(error){
         console.log(error);
     }
 }
 
-
 module.exports = {
-    connectDB,db
+    connectDB,db,
 };

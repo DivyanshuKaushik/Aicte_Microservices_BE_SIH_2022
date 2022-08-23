@@ -15,6 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 // Long-lived Page access tokens are have no expiration date.
 const appid = process.env.FACEBOOK_APP_ID
 const appsecret = process.env.FACEBOOK_APP_SECRET
+const bearer_token =  process.env.BEARER_TOKEN
 
 // routes for app
 app.post('/getlonglivedaccesstoken', async (req, res) => {
@@ -100,6 +101,155 @@ app.post('/uploadpost', async (req, res) => {
         return res.status(500).json(Response(500, 'Error', err))
     }
 })
+
+
+
+app.get('/twitter/getuserdetails/:id',async(req,res)=>{
+    try {
+        const id = req.params.id
+        const user = await axios.get(`https://api.twitter.com/2/users?ids=${id}&user.fields=created_at,description,entities,id,location,name,pinned_tweet_id,profile_image_url,protected,public_metrics,url,username,verified,withheld&expansions=pinned_tweet_id&tweet.fields=attachments,author_id,context_annotations,conversation_id,created_at,entities,geo,id,in_reply_to_user_id,lang,non_public_metrics,organic_metrics,possibly_sensitive,promoted_metrics,public_metrics,referenced_tweets,reply_settings,source,text,withheld`, {
+            headers: {
+                Authorization: `Bearer ${bearer_token}`
+            }
+        }).then((res) => { return res.data })
+        const followers = await axios.get(`https://api.twitter.com/2/users/${id}/followers`, {
+            headers: {
+                Authorization: `Bearer ${bearer_token}`
+            }
+        }).then((res) => { return res.data })
+
+
+        const following = await axios.get(`https://api.twitter.com/2/users/${id}/following`, {
+            headers: {
+                Authorization: `Bearer ${bearer_token}`
+            }
+        }).then((res) => { return res.data })
+        const timeline = await axios.get(`https://api.twitter.com/2/users/${id}/tweets?expansions=attachments.poll_ids,attachments.media_keys,author_id,geo.place_id,in_reply_to_user_id,referenced_tweets.id,entities.mentions.username,referenced_tweets.id.author_id&tweet.fields=attachments,author_id,context_annotations,conversation_id,created_at,entities,geo,id,in_reply_to_user_id,lang,possibly_sensitive,public_metrics,referenced_tweets,reply_settings,source,text,withheld&user.fields=created_at,description,entities,id,location,name,pinned_tweet_id,profile_image_url,protected,public_metrics,url,username,verified,withheld&media.fields=duration_ms,height,media_key,organic_metrics,preview_image_url,promoted_metrics,public_metrics,type,url,width&place.fields=contained_within,country,country_code,full_name,geo,id,name,place_type&poll.fields=duration_minutes,end_datetime,id,options,voting_status`, {
+            headers: {
+                Authorization: `Bearer ${bearer_token}`
+            }
+        }).then((res) => { return res.data })
+        const mentions = await axios.get(`https://api.twitter.com/2/users/${id}/mentions?expansions=attachments.poll_ids,attachments.media_keys,author_id,geo.place_id,in_reply_to_user_id,referenced_tweets.id,entities.mentions.username,referenced_tweets.id.author_id&tweet.fields=attachments,author_id,context_annotations,conversation_id,created_at,entities,geo,id,in_reply_to_user_id,lang,possibly_sensitive,public_metrics,referenced_tweets,reply_settings,source,text,withheld&user.fields=created_at,description,entities,id,location,name,pinned_tweet_id,profile_image_url,protected,public_metrics,url,username,verified,withheld&media.fields=duration_ms,height,media_key,organic_metrics,preview_image_url,promoted_metrics,public_metrics,type,url,width&place.fields=contained_within,country,country_code,full_name,geo,id,name,place_type&poll.fields=duration_minutes,end_datetime,id,options,voting_status`, {
+            headers: {
+                Authorization: `Bearer ${bearer_token}`
+            }
+        }).then((res) => { return res.data })
+
+
+        const data = { user,followers,following,timeline , mentions}
+        return res.json(Response(200,"success",JSON.stringify(data)))
+    } catch (error) {
+        return res.status(500).json(Response(500, 'Error', err))
+    }
+})
+
+
+app.get('/twitter/oauth1',async(req,res)=>{
+    try {
+        var config = {
+            method: 'post',
+            url: 'https://api.twitter.com/oauth/request_token?oauth_consumer_key=FWMrpUyDPqytfKmKgALcOIwIO&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1661183689&oauth_nonce=VpP0EqT0EQD&oauth_version=1.0&oauth_signature=6ItBivCrQrg2hNp6Msea7aeANi4%3D',
+            headers: {
+                'Cookie': 'guest_id=v1%3A166080890446027164; guest_id_ads=v1%3A166080890446027164; guest_id_marketing=v1%3A166080890446027164; personalization_id="v1_V1dSLbAwLmw/L+5ExL+NWA=="'
+            }
+        };
+
+        const result = await axios(config)
+            .then(function (response) {
+                return response.data
+            })
+            .catch(function (error) {
+                return JSON.stringify(error)
+            });
+
+
+        const splitdata = result.split("&")
+
+        oauth_token = splitdata[0].split("=")[1]
+        oauth_token_secret = splitdata[1].split("=")[1]
+        const data = { result, oauth_token, oauth_token_secret }
+        return res.json(Response(200, "success", JSON.stringify(data)))
+    } catch (error) {
+        return res.status(500).json(Response(500, 'Error', err))
+    }
+})
+
+
+app.post('/twitter/oauth2',async(req,res)=>{
+    try {
+        const oauth_token = req.body.oauthtoken
+        const oauth_verifier = req.body.oauthverifier
+        var config = {
+            method: 'post',
+            url: `https://api.twitter.com/oauth/access_token?oauth_token=${oauth_token}&oauth_verifier=${oauth_verifier}`,
+            headers: {
+                'Authorization': `OAuth oauth_consumer_key="FWMrpUyDPqytfKmKgALcOIwIO",oauth_token=${oauth_token},oauth_signature_method="HMAC-SHA1",oauth_timestamp="1660859032",oauth_nonce="d0PfPhxlSmO",oauth_version="1.0",oauth_verifier=${oauth_verifier},oauth_signature="95%2FAu88cLeqrrWwJb9O3c4B%2FhK8%3D"`,
+                'Cookie': '_twitter_sess=BAh7CSIKZmxhc2hJQzonQWN0aW9uQ29udHJvbGxlcjo6Rmxhc2g6OkZsYXNo%250ASGFzaHsABjoKQHVzZWR7ADoPY3JlYXRlZF9hdGwrCORvcLCCAToMY3NyZl9p%250AZCIlN2RiOTY3MTFmMzZlMjYzNTcxNjRhNDBjYzA1YTIwZjc6B2lkIiUxNzli%250ANzM5YjMyZWM2NjFmZWVhNjQxNzM2YTNjOGEwYw%253D%253D--41466ed8522b77ece776a3a1456bfccc6ed97a7d; guest_id=v1%3A166080890446027164; guest_id_ads=v1%3A166080890446027164; guest_id_marketing=v1%3A166080890446027164; personalization_id="v1_V1dSLbAwLmw/L+5ExL+NWA=="; lang=en'
+            }
+        };
+        const data = await axios(config)
+            .then(function (response) {
+                console.log(response);
+                return response.data;
+
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+
+        return res.json(Response(200, "success", JSON.stringify(data)))
+    } catch (error) {
+        return res.status(500).json(Response(500, 'Error', err))
+    }
+})
+
+
+app.post('/twitter/createtweet',async(req,res)=>{
+    try {
+        const text = req.body.text
+        const mediaids = req.body.mediaids
+        const oauth_token = req.body.twitter_oauth_token
+        const oauth_verifier = req.body.twitter_oauth_verifier
+        var input
+        if (mediaids && mediaids.length > 0) {
+            input = JSON.stringify({
+                "text": text,
+                "media": {
+                    "media_ids": mediaids
+                }
+            });
+        } else {
+            input = JSON.stringify({
+                "text": text,
+            });
+        }
+
+        var config = {
+            method: 'post',
+            url: 'https://api.twitter.com/2/tweets',
+            headers: {
+                'Authorization': `OAuth oauth_consumer_key="FWMrpUyDPqytfKmKgALcOIwIO",oauth_token=${oauth_token},oauth_signature_method="HMAC-SHA1",oauth_timestamp="1660860939",oauth_nonce="7ggTwFTnSKq",oauth_version="1.0",oauth_verifier=${oauth_verifier},oauth_signature="APTlLxhgksI4CB3ewWFG9dogJgg%3D"`,
+                'Content-Type': 'application/json',
+                'Cookie': 'guest_id=v1%3A166080890446027164; guest_id_ads=v1%3A166080890446027164; guest_id_marketing=v1%3A166080890446027164; personalization_id="v1_V1dSLbAwLmw/L+5ExL+NWA=="'
+            },
+            data: input
+        };
+        const data = await axios(config).then((res) => { return res.data })
+        return res.json(Response(200, "success", JSON.stringify(data)))
+    } catch (error) {
+        return res.status(500).json(Response(500, 'Error', err))
+    }
+})
+
+
+
+
+
+
+
+
+
+
 
 app.listen(process.env.PORT)
 console.log("Socials Server Up!");

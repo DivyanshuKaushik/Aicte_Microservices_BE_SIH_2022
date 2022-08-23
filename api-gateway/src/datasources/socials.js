@@ -37,5 +37,37 @@ class socialsAPI extends RESTDataSource {
             throw Error(JSON.stringify(error.extensions.response.body))
         }
     }
+
+    async twCreateTweet(data){
+        try {
+            return await this.post(`/twitter/createtweet`,data)
+        } catch (error) {
+            throw Error(JSON.stringify(error.extensions.response.body))
+        }
+    }
+
+    async twOauth2(data){
+        try {
+            return await this.post(`/twitter/oauth2`,data)
+        } catch (error) {
+            throw Error(JSON.stringify(error.extensions.response.body))
+        }
+    }
+
+    async twOauth1(){
+        try {
+            return await this.get(`/twitter/oauth1`);
+        } catch (error) {
+            throw Error(JSON.stringify(error.extensions.response.body))
+        }
+    }
+    async twGetUserDetails(userid){
+        try {
+            return await this.get(`/twitter/getuserdetails/${userid}`);
+        } catch (error) {
+            throw Error(JSON.stringify(error.extensions.response.body))
+        }
+    }
+
 }
 module.exports = socialsAPI;

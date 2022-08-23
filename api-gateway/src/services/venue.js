@@ -2,21 +2,38 @@ const { gql, UserInputError } = require("apollo-server-express");
 const { isAuthenticated } = require("../validators/auth");
 
 const typeDefs = gql`
+    type EventB{
+        id: ID
+        name: String
+        description: String
+        caption: String
+        image:String
+        status: String
+        from_date: String
+        to_date: String
+        time: String
+        organiser: ID
+        food_req: String
+        createdat: String
+        updatedat: String
+    }
     type Venue {
-        id: ID!
-        name: String!
-        email: String!
-        phone: String!
-        city: String!
-        state: String!
-        address: String!
-        pincode: String!
-        image: String!
-        capacity: String!
+        id: ID
+        name: String
+        email: String
+        phone: String
+        city: String
+        state: String
+        address: String
+        pincode: String
+        image: String
+        capacity: String
         website: String
-        venue_head: ID!
-        createdat: String!
-        updatedat: String!
+        venue_head: ID
+        canteen_menu:String
+        canteen_contact:String
+        createdat: String
+        updatedat: String
     }
     type Booking {
         id: ID!
@@ -30,6 +47,12 @@ const typeDefs = gql`
         createdat: String!
         updatedat: String!
     }
+    
+    type VenueBooking{
+        event:EventB
+        booking:Booking
+    }
+
 
     extend type Query {
         getVenues: [Venue]
@@ -37,7 +60,7 @@ const typeDefs = gql`
         getVenue(id: ID!): Venue
         getVenueBookingDetailsByBookingId(id: ID!): Booking!
         getVenueBookingDetailsByEventId(id: ID!): Booking!
-        getVenueBookings(id: ID!): [Booking]
+        getVenueBookings(id: ID!): [VenueBooking]
     }
     extend type Mutation {
         registerVenue(
@@ -52,6 +75,8 @@ const typeDefs = gql`
             image: String!
             capacity: String!
             website: String
+            canteen_menu:String
+            canteen_contact:String
         ): Venue
         updateVenue(
             id: ID!
@@ -66,6 +91,8 @@ const typeDefs = gql`
             pincode: String!
             capacity: String!
             website: String
+            canteen_menu:String!
+            canteen_contact:String!
         ): String!
         deleteVenue(id: ID!): String!
         requestVenue(

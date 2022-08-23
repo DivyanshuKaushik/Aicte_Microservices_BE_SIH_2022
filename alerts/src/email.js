@@ -16,7 +16,6 @@ async function consume_alert() {
             const { email,subject,text,phone} = JSON.parse(value);
             switch (topic) {
                 case "alert":
-                    // console.log(email,subject,text,topic);
                     await send_email(email,subject,text);
                     return;
                 case "mass_mail":

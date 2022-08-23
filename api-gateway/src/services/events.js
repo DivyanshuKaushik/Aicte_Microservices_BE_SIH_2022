@@ -2,18 +2,20 @@ const { gql, UserInputError } = require("apollo-server-express");
 const {isAuthenticated} = require("../validators/auth");
 const typeDefs = gql`
     type Event{
-        id: ID!
-        name: String!
-        description: String!
-        caption: String!
-        image:String!
-        status: String!
-        from_date: String!
-        to_date: String!
-        time: String!
-        organiser: ID!
-        createdat: String!
-        updatedat: String!
+        id: ID
+        name: String
+        description: String
+        caption: String
+        image:String
+        status: String
+        from_date: String
+        to_date: String
+        time: String
+        organiser: ID
+        food_req: String
+        expected_count:String
+        createdat: String
+        updatedat: String
     }
     type Invite {
         id: ID!
@@ -31,17 +33,39 @@ const typeDefs = gql`
         email: String!
         phone: String!
     }
+    type Task{
+        id: ID!
+        user_id: ID
+        event_id: ID
+        user_name:String
+        user_email:String
+        task: String
+        createdat:String
+    }
+    input TaskInput{
+        id: ID!
+        name:String!
+        email:String!
+        task: String!
+    }
+    type TaskForUser{
+        event:Event 
+        task:String
+    }
     extend type Query {
         getEvents: [Event]
         getEvent(id: ID!): Event
         getInvites(event_id: ID!): [Invite]
         getInvitedEvents(user_id: ID!): [Event]
+        getTasksByEvent(event_id:ID!):[Task]
+        getTasksByUser(user_id:ID!) : [TaskForUser]
     }
     extend type Mutation{
-    createEvent(name:String!,description:String!,organiser:String!,caption:String!,status:String!,from_date:String!,to_date:String!,time:String!,image:String!): Event
+    createEvent(name:String!,description:String!,organiser:String!,food_req:String!,expected_count:String!,caption:String!,status:String!,from_date:String!,to_date:String!,time:String!,image:String!): Event
     updateEvent(id:ID!,name:String!,description:String!,,organiser:String!caption:String!,status:String!,from_date:String!,to_date:String!,time:String!,image:String!): String! 
     deleteEvent(id:ID!): String! 
     inviteUsers(event_id:ID!,users:[InviteUser]): String!
+    assignTasks(event_id:ID!,tasks:[TaskInput]): String!
   }
 `
 const resolvers = {
@@ -59,7 +83,7 @@ const resolvers = {
                 req.user = await isAuthenticated(req)
                 return (await dataSources.eventsAPI.getEvent(args.id)).data;
             } catch (error) {
-                throw new Error(error.data);
+                throw new Error(error);
             }
         },
         async getInvites(_, args, { dataSources, req }, info) {
@@ -67,7 +91,7 @@ const resolvers = {
                 req.user = await isAuthenticated(req)
                 return (await dataSources.eventsAPI.getInvites(args.event_id)).data;
             } catch (error) {
-                throw new Error(error.data);
+                throw new Error(error);
             }
         },
         async getInvitedEvents(_, args, { dataSources, req }, info) {
@@ -75,9 +99,26 @@ const resolvers = {
                 req.user = await isAuthenticated(req)
                 return (await dataSources.eventsAPI.getInvitedEvents(args.user_id)).data;
             } catch (error) {
-                throw new Error(error.data);
+                throw new Error(error);
             }
-        }
+        },
+        async getTasksByEvent(_, args, { dataSources, req }, info){
+            try {
+                req.user = await isAuthenticated(req)
+                return (await dataSources.eventsAPI.getTasksByEvent(args.event_id)).data;
+            } catch (error) {
+                throw new Error(error);
+            }
+        },
+        async getTasksByUser(_, args, { dataSources, req }, info){
+            try {
+                req.user = await isAuthenticated(req)
+                return (await dataSources.eventsAPI.getTasksByUser(args.user_id)).data;
+            } catch (error) {
+                console.log(error);
+                throw new Error(error);
+            }
+        },
     },
     Mutation:{
         async createEvent(_,args,{dataSources,req},info){
@@ -111,7 +152,15 @@ const resolvers = {
             }catch(err){
                 throw new UserInputError(err)
             }
-        }
+        },
+        async assignTasks(_,args,{dataSources,req},info){
+            try{
+                req.user = await isAuthenticated(req)
+                return (await dataSources.eventsAPI.assignTasks(args)).data;
+            }catch(err){
+                throw new UserInputError(err)
+            }
+        },
     }
 }
 module.exports = {typeDefs, resolvers};

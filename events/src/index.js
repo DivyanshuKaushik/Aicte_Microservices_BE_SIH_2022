@@ -30,7 +30,7 @@ connectProducers();
 // get all events 
 app.get('/events', async (req, res) => {
     try {
-        const user = JSON.parse(req.headers.user)
+        // const user = JSON.parse(req.headers.user)
         const query = 'select * from aicte.events'
         const data = (await db.execute(query,[])).rows 
         return res.status(200).json(Response(200, 'Success', data))
@@ -61,16 +61,16 @@ app.post('/events',async (req, res) => {
         user_name:user.name
     }
     try {
-        const { name,description,caption,status,from_date,to_date,time,image,organiser } = req.body
-        if (!(name && description && caption && status && from_date && to_date && time && image && organiser)) {
+        const { name,description,caption,status,from_date,to_date,time,image,organiser,food_req,expected_count } = req.body
+        if (!(name && description && caption && status && from_date && to_date && time && image && organiser && food_req && expected_count)) {
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
         }
         const id = uuid.v4()
         const timestamp = new Date().toISOString()
-        const query = 'insert into aicte.events (id,name,description,caption,status,from_date,to_date,time,image,organiser,createdat,updatedat) values (?,?,?,?,?,?,?,?,?,?,?,?)'
-        await db.execute(query,[id,name,description,caption,status,from_date,to_date,time,image,organiser,timestamp,timestamp])
+        const query = 'insert into aicte.events (id,name,description,caption,status,from_date,to_date,time,image,organiser,food_req,expected_count,createdat,updatedat) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+        await db.execute(query,[id,name,description,caption,status,from_date,to_date,time,image,organiser,food_req,expected_count,timestamp,timestamp])
         log.message = `created event ${name} with id ${id}`
-        res.status(200).json(Response(200, 'Success', { id, name, description, caption, status, from_date, to_date, time, image,organiser, createdat: timestamp, updatedat: timestamp }))
+        res.status(200).json(Response(200, 'Success', { id, name, description, caption, status, from_date, to_date, time, image,organiser,food_req,expected_count, createdat: timestamp, updatedat: timestamp }))
     }
     catch (error) {
         log.message = "error in registering event"
@@ -94,13 +94,13 @@ app.put('/events/:id', async (req, res) => {
         user_name:user.name
     }
     try {
-        const { name,description,caption,status,from_date,to_date,time,image,organiser } = req.body
-        if (!(name && description && caption && status && from_date && to_date && time && image && organiser)){
+        const { name,description,caption,status,from_date,to_date,time,image,organiser,food_req } = req.body
+        if (!(name && description && caption && status && from_date && to_date && time && image && organiser && food_req)){
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
         }
         const timestamp = new Date().toISOString()
-        const update_event = `update aicte.events set name = ?,description = ?,caption = ?,status = ?,from_date = ?,to_date = ?,time = ?,image = ?,organiser = ?,updatedat = ? where id = ?`
-        await db.execute(update_event,[name,description,caption,status,from_date,to_date,time,image,organiser,timestamp,req.params.id])
+        const update_event = `update aicte.events set name = ?,description = ?,caption = ?,status = ?,from_date = ?,to_date = ?,food_req = ?,time = ?,image = ?,organiser = ?,updatedat = ? where id = ?`
+        await db.execute(update_event,[name,description,caption,status,from_date,to_date,food_req,time,image,organiser,timestamp,req.params.id])
         log.message = `updated event ${name} with id ${req.params.id}`
         res.json(Response(200, 'Success', "Event updated successfully"))
     }
@@ -236,6 +236,66 @@ app.post('/events/:id/invite', async (req, res) => {
         messages: [{value:JSON.stringify(log)}],
     })
     return;
+})
+// assign tasks to users 
+app.post('/events/assigntasks',async(req,res)=>{
+    try {
+        const {event_id,tasks} = req.body
+        if(!(event_id&&tasks)){
+            return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
+        }
+        const event = (await db.execute('select * from aicte.events where id = ?',[event_id])).rows[0]
+        await tasks.forEach(async(task)=>{
+            const id = uuid.v4()
+            const timestamp = new Date().toISOString()
+            const query = "insert into aicte.event_tasks (id,event_id,user_id,user_name,user_email,task,createdat) values (?,?,?,?,?,?,?)"
+            await db.execute(query,[id,event_id,task.id,task.name,task.email,task.task,timestamp])
+            await alertProducer.send({
+                topic: 'alert',
+                messages: [{value: JSON.stringify({
+                    email: task.email,
+                    subject:`Your tasks for event ${event.name}`,
+                    text:`Your task is to ${task.task}`
+                })}]
+            })
+        })
+        return res.status(200).json(Response(200,"success","Tasks assigned sucessfully"))
+    } catch (error) {
+        return res.status(500).json(Response(500, 'Error', error))
+    }
+})
+
+// get tasks of events 
+app.get('/events/tasks/event/:id',async(req,res)=>{
+    console.log("req.query");
+    try{
+        const query = "select * from aicte.event_tasks where event_id = ? allow filtering"
+        const data = (await db.execute(query,[req.params.id])).rows
+        return res.json(Response(200,'success',data))
+       
+
+    }catch(error){
+        console.log(error);
+        return res.status(500).json(Response(500, 'Error', error)) 
+    }
+})
+// get tasks of events by user 
+app.get('/events/tasks/user/:id',async(req,res)=>{
+    try{
+            // get tasks by user 
+            const query = 'select * from aicte.event_tasks where user_id = ? allow filtering'
+            const result = []
+            const user_tasks = (await db.execute(query,[req.params.id])).rows
+            for (let index = 0; index < user_tasks.length; index++) {
+                const event = (await db.execute('select * from aicte.events where id = ?',[user_tasks[index].event_id])).rows[0]
+                result.push({event,task:user_tasks[index].task})
+            }
+            console.log(result);
+            return res.json(Response(200,'success',result))
+    }catch(error){
+        console.log(error);
+        return res.status(500).json(Response(500, 'Error', error)) 
+    }
 })
 
 // get invited users for event 

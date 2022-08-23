@@ -29,9 +29,16 @@ app.use(express.urlencoded({ extended: true }));
 
 // get all users 
 app.get('/users', async(req, res) => {
+    const {department} = req.query
+    // get users by department 
+    if(department){
+        const query = 'select * from aicte.users where department = ? allow filtering' 
+        const data = (await db.execute(query,[department])).rows 
+        return res.status(200).json(Response(200, 'Success', data))
+    }
     const query = 'select * from aicte.users'
     const data = (await db.execute(query,[])).rows 
-    res.status(200).json(Response(200, 'Success', data))
+    return res.status(200).json(Response(200, 'Success', data))
 });
 
 // get user 
@@ -40,6 +47,18 @@ app.get('/users/:id', async(req, res) => {
     const data = (await db.execute(query,[req.params.id])).rows[0]
     res.status(200).json(Response(200, 'Success', data))
 });
+
+// update profile image 
+app.put('/users/profile/:id',async (req,res)=>{
+    try{
+        const { image } = req.body
+        const query = 'update aicte.users set image = ? where id = ?'
+        await db.execute(query,[image,req.params.id])
+        res.status(200).json(Response(200, 'Success', "User profile updated successfully"))
+    }catch(error){
+        res.status(500).json(Response(500, 'Error', err))
+    }
+})
 
 app.post('/users/login',async(req, res) => {
     try{
