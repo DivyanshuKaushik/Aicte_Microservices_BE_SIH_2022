@@ -3,8 +3,12 @@ const { send_email, mass_mailer, send_sms } = require("./ses");
 
 // connect consumer 
 async function connectConsumer() {
-    await consumer.connect();
-    console.log("consumer_connected");
+    try{
+        await consumer.connect();
+        console.log("consumer_connected");
+    }catch(err){
+        console.log(err);
+    }
 }
 
 // alert mail consumer 

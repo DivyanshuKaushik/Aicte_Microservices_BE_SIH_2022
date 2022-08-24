@@ -86,5 +86,26 @@ class eventsAPI extends RESTDataSource {
       throw Error(JSON.stringify(error.extensions.response.body))
     }
   }
+  async updateEventStatus(args){
+    try{
+      return await this.put(`/events/${args.id}/status`,args);
+    }catch(error){
+      throw Error(JSON.stringify(error.extensions.response.body))
+    }
+  }
+  async submitFeedback(data){
+    try{
+      return await this.post(`/events/feedback`,data);
+    }catch(error){
+      throw Error(JSON.stringify(error.extensions.response.body))
+    }
+  }
+  async getFeedbacks(event_id){
+    try{
+      return await this.get(`/events/feedback/${event_id}`);
+    }catch(error){
+      throw Error(JSON.stringify(error.extensions.response.body))
+    }
+  }
 }
 module.exports = eventsAPI;

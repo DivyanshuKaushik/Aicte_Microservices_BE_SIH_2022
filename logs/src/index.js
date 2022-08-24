@@ -26,14 +26,18 @@ connectConsumer();
 // consume logs
 async function logs(){
     console.log("logging activities");
-    await consumer.subscribe({ topic: "log", fromBeginning: true });
+    await consumer.subscribe({ topics: ["log","notify"], fromBeginning: true });
     await consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
-            const log = JSON.parse(message.value.toString());
-            console.log(log)
             const timestamp = new Date().toISOString();
-            const query = 'insert into aicte.logs (id,type,message,user_id,user_name,timestamp) values (?,?,?,?,?,?)';
-            await db.execute(query,[uuid.v4(),log.type,log.message,log.user_id,log.user_name,timestamp]);
+            const data = JSON.parse(message.value.toString());
+            if(topic==="log"){
+                const query = 'insert into aicte.logs (id,type,message,user_id,user_name,timestamp) values (?,?,?,?,?,?)';
+                await db.execute(query,[uuid.v4(),data.type,data.message,data.user_id,data.user_name,timestamp]);
+            }else if(topic==="notify"){
+                const query = 'insert into aicte.notifications (id,message,user_id,createdat) values (?,?,?,?)';
+                await db.execute(query,[uuid.v4(),data.message,data.user_id,timestamp]);
+            }
         }
     });
 }
@@ -65,6 +69,17 @@ app.get('/logs', async(req, res) => {
     }
 })
 
+app.get('/notifications/:id',async(req,res)=>{
+    try {
+        const {id} = req.params;
+        const query = 'select * from aicte.notifications where user_id = ? allow filtering';
+        const data = (await db.execute(query,[id])).rows;
+        return res.status(200).json(Response(200, 'Success', data))
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json(Response(500, 'Error', error))
+    }
+})
 app.listen(process.env.PORT)
 
 console.log("Logs server up!");

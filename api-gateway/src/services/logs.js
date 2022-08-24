@@ -10,11 +10,18 @@ const typeDefs = gql`
         message: String!
         type: String!
     }
+    type Notification{
+        id: ID
+        user_id: ID
+        message: String
+        createdat: String
+    }
     extend type Query {
         getLogs: [Log]!
         getLogsByDate(date:String!): [Log]
         getLogsByMonth(year_month:String!): [Log]
         getLogsByYear(year:String!): [Log]
+        getNotifications(user_id:ID!): [Notification]
     }
 `
 const resolvers = {
@@ -45,6 +52,13 @@ const resolvers = {
         async getLogsByYear(_, args, { dataSources }, info) {
             try {
                 return (await dataSources.logsAPI.getLogsByYear(args.year)).data;
+            } catch (error) {
+                throw new Error(error);
+            }
+        },
+        async getNotifications(_, args, { dataSources }, info) {
+            try {
+                return (await dataSources.logsAPI.getNotifications(args.user_id)).data;
             } catch (error) {
                 throw new Error(error);
             }

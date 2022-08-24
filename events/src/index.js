@@ -83,7 +83,32 @@ app.post('/events',async (req, res) => {
     })
     return;
 });
-
+// update event status 
+app.put('/events/:id/status',async(req,res)=>{
+    const user = JSON.parse(req.headers.user)
+    const log = {
+        type:"event_update",
+        message:"",
+        user_id:user.id,
+        user_name:user.name
+    }
+    try{
+        const {status} = req.body 
+        const q = 'update aicte.events set status = ? where id = ?'
+        await db.execute(q,[status,req.params.id])
+        log.message = `updated event status with id ${req.params.id}`
+        res.json(Response(200,'success',"event status updated"))
+    }catch(error){
+        log.message = "error in updating event with id "+req.params.id
+        res.status(500).json(Response(500, 'Error', error))
+    }
+     // log to db using kafka producer
+     await logProducer.send({
+        topic: "log",
+        messages: [{value:JSON.stringify(log)}],
+    })
+    return;
+})
 // update venue details
 app.put('/events/:id', async (req, res) => {
     const user = JSON.parse(req.headers.user)
@@ -300,7 +325,42 @@ app.post('/events/assigntasks',async(req,res)=>{
         return res.status(500).json(Response(500, 'Error', error))
     }
 })
+app.post('/events/feedback',async(req,res)=>{
+    try {
+        const {event_id,user_id,user_name,user_email,overall,venue,coordination,canteen,suggestion} = req.body
+        if(!(event_id&&user_id&&user_name&&user_email&&overall&&venue&&coordination&&canteen&&suggestion)){
+            return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
+        }
+        const event = (await db.execute('select * from aicte.events where id = ?',[event_id])).rows[0]
+        const timestamp = new Date().toISOString()
+        const query = "insert into aicte.feedbacks (id,event_id,user_id,user_name,user_email,overall,venue,coordination,canteen,suggestion,createdat) values (?,?,?,?,?,?,?,?,?,?,?)"
+        await db.execute(query,[uuid.v4(),event_id,user_id,user_name,user_email,overall,venue,coordination,canteen,suggestion,timestamp])
+        alertProducer.send({
+            topic: 'alert',
+            messages: [{value: JSON.stringify({
+                email: user_email,
+                subject:`Feedback submitted for event ${event.name}!`,
+                text:`Hi! ${user_name} your feedback for event ${event.name} has been received. Thank you for your valuable feedback.`
+            })}]
+        })
+        return res.status(200).json(Response(200,"success","Feedback submitted successfully"))
+    } catch (error) {
+        return res.status(500).json(Response(500, 'Error', error))
+    }
+})
 
+app.get('/events/feedback/:id',async(req,res)=>{
+    try {
+        const {id} = req.params
+        if(!id){
+            return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
+        }
+        const feedback = (await db.execute('select * from aicte.feedbacks where event_id = ? allow filtering',[id])).rows
+        return res.status(200).json(Response(200,"success",feedback))
+    } catch (error) {
+        return res.status(500).json(Response(500, 'Error', error))
+    }
+})
 // get tasks of events 
 app.get('/events/tasks/event/:id',async(req,res)=>{
     console.log("req.query");

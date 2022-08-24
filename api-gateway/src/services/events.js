@@ -52,6 +52,19 @@ const typeDefs = gql`
         event:Event 
         task:String
     }
+    type Feedback{
+        id: ID
+        event_id: ID
+        user_id: ID
+        user_name:String
+        user_email:String
+        overall: String
+        venue: String
+        coordination: String
+        canteen: String
+        suggestion: String
+        createdat:String
+    }
     extend type Query {
         getEvents: [Event]
         getEvent(id: ID!): Event
@@ -59,6 +72,7 @@ const typeDefs = gql`
         getInvitedEvents(user_id: ID!): [Event]
         getTasksByEvent(event_id:ID!):[Task]
         getTasksByUser(user_id:ID!) : [TaskForUser]
+        getFeedbacks(event_id:ID!):[Feedback]
     }
     extend type Mutation{
     createEvent(name:String!,description:String!,organiser:String!,food_req:String!,expected_count:String!,caption:String!,status:String!,from_date:String!,to_date:String!,time:String!,image:String!): Event
@@ -66,6 +80,8 @@ const typeDefs = gql`
     deleteEvent(id:ID!): String! 
     inviteUsers(event_id:ID!,departments:[String],users:[InviteUser]): String!
     assignTasks(event_id:ID!,tasks:[TaskInput]): String!
+    updateEventStatus(id:ID!,status:String!):String!
+    submitFeedback(user_id:ID!,user_name:String!,user_email:String!,event_id:ID!,overall:String!,venue:String!,coordination:String!,canteen:String!,suggestion:String!):String!
   }
 `
 const resolvers = {
@@ -119,6 +135,14 @@ const resolvers = {
                 throw new Error(error);
             }
         },
+        async getFeedbacks(_, args, { dataSources, req }, info){
+            try {
+                req.user = await isAuthenticated(req)
+                return (await dataSources.eventsAPI.getFeedbacks(args.event_id)).data;
+            } catch (error) {
+                throw new Error(error);
+            }
+        }
     },
     Mutation:{
         async createEvent(_,args,{dataSources,req},info){
@@ -133,6 +157,14 @@ const resolvers = {
             try{
                 req.user = await isAuthenticated(req)
                 return (await dataSources.eventsAPI.updateEvent(args)).data;
+            }catch(err){
+                throw new UserInputError(err)
+            }
+        },
+        async updateEventStatus(_,args,{dataSources,req},info){
+            try{
+                req.user = await isAuthenticated(req)
+                return (await dataSources.eventsAPI.updateEventStatus(args)).data;
             }catch(err){
                 throw new UserInputError(err)
             }
@@ -161,6 +193,14 @@ const resolvers = {
                 throw new UserInputError(err)
             }
         },
+        async submitFeedback(_,args,{dataSources,req},info){
+           try{
+                req.user = await isAuthenticated(req)
+                return (await dataSources.eventsAPI.submitFeedback(args)).data;
+            }catch(err){
+            throw new Error(err)
+           }
+        }
     }
 }
 module.exports = {typeDefs, resolvers};

@@ -34,6 +34,7 @@ app.get('/users', async(req, res) => {
     if(department){
         const query = 'select * from aicte.users where department = ? allow filtering' 
         const data = (await db.execute(query,[department])).rows 
+        // console.log(data);
         return res.status(200).json(Response(200, 'Success', data))
     }
     const query = 'select * from aicte.users'

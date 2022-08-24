@@ -25,5 +25,8 @@ class logsAPI extends RESTDataSource {
         const logs = await this.get(`/logs?year=${year}`);
         return logs;
     }
+    async getNotifications(userid){
+        return await this.get(`/notifications/${userid}`);
+    }
 }
 module.exports = logsAPI;

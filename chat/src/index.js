@@ -9,13 +9,13 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// // connect to kafka producers
-// async function connectProducers() {
-//     await alertProducer.connect();
-//     await logProducer.connect();
-//     console.log("producer_connected");
-// }
-// connectProducers();
+// connect to kafka producers
+async function connectProducers() {
+    // await alertProducer.connect();
+    await logProducer.connect();
+    console.log("producer_connected");
+}
+connectProducers();
 
 // connect to mongo db
 mongoose
@@ -112,6 +112,10 @@ app.post("/sendMessage", async (req, res) => {
             message: message,
         });
         await chat.save()
+        logProducer.send({
+            topic:"notify",
+            messages:[{value:JSON.stringify({user_id:to,message:`Message From ${user.name}`})}]
+        })
         return res
             .status(200)
             .json(Response(200, "Success", "Sent successfully"));
