@@ -44,8 +44,8 @@ async function start() {
     cache: "bounded",
     context: ({ req, }) => ({ req,pubsub }),
     plugins: [
-        ApolloServerPluginLandingPageGraphQLPlayground(),
-        // ApolloServerPluginLandingPageLocalDefault()
+        // ApolloServerPluginLandingPageGraphQLPlayground(),
+        ApolloServerPluginLandingPageLocalDefault()
       // {
       //   async serverWillStart() {
       //     return {

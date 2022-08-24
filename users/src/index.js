@@ -57,7 +57,7 @@ app.put('/users/profile/:id',async (req,res)=>{
         await db.execute(query,[image,req.params.id])
         res.status(200).json(Response(200, 'Success', "User profile updated successfully"))
     }catch(error){
-        res.status(500).json(Response(500, 'Error', err))
+        res.status(500).json(Response(500, 'Error', error))
     }
 })
 
