@@ -60,7 +60,7 @@ app.get('/venues/:id', async (req, res) => {
 app.get('/venues/head/:id',async(req,res)=>{
     try {
         const query = 'select * from aicte.venues where venue_head = ? allow filtering'
-        const data = (await db.execute(query,[req.params.id])).rows[0]
+        const data = (await db.execute(query,[req.params.id])).rows
         return res.status(200).json(Response(200, 'Success', data))
     } catch (error) {
         return res.status(500).json(Response(500, 'Error', error))

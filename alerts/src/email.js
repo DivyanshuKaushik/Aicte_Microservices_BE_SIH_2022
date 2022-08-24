@@ -16,10 +16,11 @@ async function consume_alert() {
             const { email,subject,text,phone} = JSON.parse(value);
             switch (topic) {
                 case "alert":
+                    console.log(email,topic);
                     await send_email(email,subject,text);
                     return;
                 case "mass_mail":
-                    // console.log(email,topic);
+                    console.log(email,topic);
                     await mass_mailer(email,subject,text);
                     return;
                 case "sms":

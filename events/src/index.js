@@ -159,18 +159,10 @@ app.post('/events/:id/invite', async (req, res) => {
         if (!users) {
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
         }
-        // add user by departments 
-        if(departments){
-            await departments.forEach(async(dept)=>{
-                const dept_user = (await db.execute('select * from aicte.users where department = ? allow filtering',[dept])).rows
-                dept_user.forEach(({id,name,phone,email})=>{
-                    users.push({id,name,phone,email})
-                })
-            })
-        }
         // only email of users for mass mail
         const emails = []
         const phones = []
+        
         // save to db 
         const query = 'insert into aicte.invites (id,event_id,user_id,name,email,phone,createdat,updatedat) values (?,?,?,?,?,?,?,?)'
         await users.forEach(async (user)=>{
@@ -188,6 +180,41 @@ app.post('/events/:id/invite', async (req, res) => {
         // booking and venue details for mail
         const booking = (await db.execute('select * from aicte.bookings where event_id = ? allow filtering',[event.id])).rows[0]
         const venue = (await db.execute('select * from aicte.venues where id = ?',[booking.venue_id])).rows[0]
+        await departments.forEach(async(dept)=>{
+            const users_depts = (await db.execute('select * from aicte.users where department = ? allow filtering',[dept])).rows
+            for (let i = 0; i < users_depts.length; i++) {
+                const ele = users_depts[i];
+                emails.push(ele.email)
+                phones.push(ele.phone)
+                const timestamp = new Date().toISOString()
+                const invite_id = uuid.v4()
+                // find user 
+                const find_user = `select * from aicte.invites where user_id = ? and event_id = ? allow filtering`
+                const user_data = (await db.execute(find_user,[ele.id,event_id])).rows
+                console.log(ele.email,ele.phone);
+                const msg = {
+                    email:ele.email,
+                    subject:`Invite for ${event.name}`,
+                    text:`You have been invited to ${event.name} on ${event.from_date} at ${event.time} Venue details are as follows: ${venue.name} ${venue.address} ${venue.city} ${venue.state} ${venue.pincode} website: ${venue.website}`,
+                }
+                await alertProducer.send({
+                    topic: "alert",
+                    messages: [{value:JSON.stringify(msg)}],
+                })
+                await alertProducer.send({
+                    topic:"sms",
+                    messages:[{
+                        value:JSON.stringify({
+                            phone:ele.phone,
+                            text:`You have been invited to ${event.name} on ${event.from_date} at ${event.time} Venue details are as follows: ${venue.name} ${venue.address} ${venue.city} ${venue.state} ${venue.pincode} website: ${venue.website}`
+                        })
+                    }]
+                })
+                if (user_data.length > 0) return;
+                await db.execute(query,[invite_id,event_id,ele.id,ele.name,ele.email,ele.phone,timestamp,timestamp])
+            }
+            
+        })
         // send mail to every invited user using kafka producer
         // if invites are more than 50 then send mail in batches of 50
         if (emails.length > 50) {
