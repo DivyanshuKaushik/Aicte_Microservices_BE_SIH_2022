@@ -16,15 +16,16 @@ const typeDefs = gql`
         image: String
     }
     type AuthUser{
-        id: ID!
-        name: String!
-        email: String!
-        phone: String!
-        role: String!
-        department: String!
-        createdat: String!
-        updatedat: String!
-        token: String!
+        id: ID
+        name: String
+        email: String
+        phone: String
+        role: String
+        department: String
+        createdat: String
+        updatedat: String
+        token: String
+        image: String
     }
     extend type Query {
         getUsers: [User]

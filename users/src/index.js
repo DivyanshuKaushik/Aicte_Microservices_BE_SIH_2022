@@ -2,6 +2,7 @@
 const express = require('express');
 const uuid = require('uuid');
 const bcrypt = require('bcryptjs')
+const {check,validationResult} = require('express-validator')
 const { connectDB,db } = require('./db');
 const { Response, alertProducer,logProducer } = require('./helpers');
 
@@ -81,7 +82,11 @@ app.post('/users/login',async(req, res) => {
 })
 
 // register new user 
-app.post('/users', async(req, res) => {
+app.post('/users',[check('email',"Enter valid Email!").notEmpty().isEmail(),check("password",'Enter valid password').notEmpty()], async(req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json(Response(400, 'Bad request', errors.array()));
+    }
     const user = JSON.parse(req.headers.user)
     const log = {
         type:"event_register",
@@ -92,6 +97,9 @@ app.post('/users', async(req, res) => {
     try{
         let { name, email, password,phone,role,department } = req.body
         const unhashedPassword = password;
+        if(password.length < 8){
+            return res.status(400).json(Response(400, 'Bad Request', 'Password must be atleast 8 characters long'))
+        }
         if (!(name &&  email &&  password && phone && role && department)){
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
         }

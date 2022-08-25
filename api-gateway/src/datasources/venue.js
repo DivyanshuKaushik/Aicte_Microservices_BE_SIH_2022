@@ -88,5 +88,12 @@ class venueAPI extends RESTDataSource {
       throw Error(JSON.stringify(error.extensions.response.body))
     }
   }
+  async getAvailableVenues(args){
+    try {
+      return await this.get(`/venues/available`,args);
+    } catch (error) {
+      throw Error(JSON.stringify(error.extensions.response.body))
+    }
+  }
 }
 module.exports = venueAPI;

@@ -44,7 +44,46 @@ app.get('/venues', async (req, res) => {
         return res.status(500).json(Response(500, 'Error', error))
     }
 })
+// date time checkers 
+// convert date to dd/mm/yyyy format
+function convert(date) {
+    let d = date.split('/')
+    d = d[1] + '/' + d[0] + '/' + d[2]
+    return new Date(d)
+}
+function isInDateRange(date, start, end) {
+    // console.log(convert(date));
+    return convert(date) >= convert(start) && convert(date) <= convert(end);
+}
+function isInTimeRange(time, start, end) {
+    return time >= start && time <= end;
+}
+// get available venues 
+app.get('/venues/available', async (req, res) => {
+    try {
+        let {from_date,to_date,time} = req.query
+        if(!(from_date && to_date && time)){
+            return res.status(400).json(Response(400, 'Error', "Please provide all the parameters"))
+        }
+        time = Object.values(JSON.parse(time))
+        console.log(time);
+    
 
+        const venues = (await db.execute('select * from aicte.bookings',[])).rows
+        const available_venues = []
+        for(let i=0;i<venues.length;i++){
+            if(!isInDateRange(from_date,venues[i].from_date,venues[i].to_date)){
+                console.log(venues[i]);
+                available_venues.push(venues[i])
+           }
+        }
+        console.log(available_venues);
+        return res.status(200).json(Response(200, 'Success', available_venues))
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json(Response(500, 'Error', error))
+    }
+})
 // get venue 
 app.get('/venues/:id', async (req, res) => {
     try {
@@ -77,15 +116,15 @@ app.post('/venues', async (req, res) => {
         user_name: user.name,
     }
     try {
-        let { name,email,phone,state,city,address,pincode,capacity,website,venue_head,image,canteen_menu,canteen_contact } = req.body
-        if (!(name &&  email &&  phone && state && city && address && pincode && capacity && venue_head && image && canteen_menu&&canteen_contact)){
+        let { name,email,phone,state,city,address,pincode,capacity,website,venue_head,image,canteen_menu,canteen_contact,resources } = req.body
+        if (!(name &&  email &&  phone && state && city && address && pincode && capacity && venue_head && image && canteen_menu&&canteen_contact&&resources)) {
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
         }
         website = website ? website : ''
         const id = uuid.v4()
         const timestamp = new Date().toISOString()
-        const save_venue = "insert into aicte.venues (id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,canteen_menu,canteen_contact,createdat,updatedat,image) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
-        await db.execute(save_venue,[id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,canteen_menu,canteen_contact,timestamp,timestamp,image])
+        const save_venue = "insert into aicte.venues (id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,canteen_menu,canteen_contact,resources,createdat,updatedat,image) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+        await db.execute(save_venue,[id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,canteen_menu,canteen_contact,resources,timestamp,timestamp,image])
         log.message = `${name} registered`
         await alertProducer.send({
             topic: 'alert',
@@ -106,7 +145,7 @@ app.post('/venues', async (req, res) => {
                 })
             }]
         })
-        res.json(Response(200, 'Success', { id, name,image, email, phone,venue_head,state, city, address, pincode, capacity, website,canteen_menu,canteen_contact, createdat:timestamp, updatedat:timestamp }))
+        res.json(Response(200, 'Success', { id, name,image, email, phone,venue_head,state, city, address, pincode, capacity, website,canteen_menu,canteen_contact,resources,createdat:timestamp, updatedat:timestamp }))
     }
     catch (error) {
         // console.log(error);
@@ -198,7 +237,7 @@ app.post('/venues/book',async(req,res)=>{
     }
     try {
         const {event_id,venue_id,venue_head,from_date,to_date,time} = req.body
-        const status = 'requested'
+        const status = 'booked'
         const id = uuid.v4()
         const timestamp = new Date().toISOString()
         const query = "insert into aicte.bookings (id,event_id,venue_id,venue_head,from_date,to_date,time,status,createdat,updatedat) values (?,?,?,?,?,?,?,?,?,?)"
@@ -222,9 +261,10 @@ app.post('/venues/book',async(req,res)=>{
                     message:`${venue.name} has been requested for booking for ${event.name}`
                 })}]
         })
-        res.json(Response(200, 'Success', "Venue Requested for event"))
+        res.json(Response(200, 'Success', "Venue Booked for event"))
     } catch (error) {
-        log.message = `error in booking venue with id ${req.params.id} for event with id ${req.params.id}`
+        console.log(error);
+        log.message = `error in booking venue`
         res.status(500).json(Response(500, 'Error', error))
     }
     // log to db using kafka producer

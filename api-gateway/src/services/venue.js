@@ -32,6 +32,7 @@ const typeDefs = gql`
         venue_head: ID
         canteen_menu:String
         canteen_contact:String
+        resources:[String]
         createdat: String
         updatedat: String
     }
@@ -62,6 +63,7 @@ const typeDefs = gql`
         getVenueBookingDetailsByBookingId(id: ID!): Booking!
         getVenueBookingDetailsByEventId(id: ID!): Booking!
         getVenueBookings(id: ID!): [VenueBooking]
+        getAvailableVenues(from_date:String!,to_date:String!,time:String!) : [Venue]
     }
     extend type Mutation {
         registerVenue(
@@ -76,8 +78,9 @@ const typeDefs = gql`
             image: String!
             capacity: String!
             website: String
-            canteen_menu:String
-            canteen_contact:String
+            canteen_menu:String!
+            canteen_contact:String!
+            resources: [String]!
         ): Venue
         updateVenue(
             id: ID!
@@ -179,6 +182,14 @@ const resolvers = {
                 throw new Error(error);
             }
         },
+        async getAvailableVenues(_, args, { dataSources,req }, info) {
+            try {
+                req.user = await isAuthenticated(req)
+                return (await dataSources.venueAPI.getAvailableVenues(args)).data;
+            } catch (error) {
+                throw new Error(error);
+            }
+        }
     },
     Mutation: {
         async registerVenue(_, args, { dataSources,req }, info) {

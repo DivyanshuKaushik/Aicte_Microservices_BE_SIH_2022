@@ -96,7 +96,7 @@ const resolvers = {
         },
         async getEvent(_, args, { dataSources, req }, info) {
             try {
-                req.user = await isAuthenticated(req)
+                // req.user = await isAuthenticated(req)
                 return (await dataSources.eventsAPI.getEvent(args.id)).data;
             } catch (error) {
                 throw new Error(error);

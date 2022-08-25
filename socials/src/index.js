@@ -178,17 +178,18 @@ app.get('/twitter/oauth1',async(req,res)=>{
     try {
         var config = {
             method: 'post',
-            url: 'https://api.twitter.com/oauth/request_token?oauth_consumer_key=FWMrpUyDPqytfKmKgALcOIwIO&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1661183689&oauth_nonce=VpP0EqT0EQD&oauth_version=1.0&oauth_signature=6ItBivCrQrg2hNp6Msea7aeANi4%3D',
-            headers: {
-                'Cookie': 'guest_id=v1%3A166080890446027164; guest_id_ads=v1%3A166080890446027164; guest_id_marketing=v1%3A166080890446027164; personalization_id="v1_V1dSLbAwLmw/L+5ExL+NWA=="'
+            url: 'https://api.twitter.com/oauth/request_token?oauth_consumer_key=FWMrpUyDPqytfKmKgALcOIwIO&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1661407847&oauth_nonce=t9hMopGUkw4&oauth_version=1.0&oauth_signature=UQ%2BjzQsTS2cDMdgta1LElNLoYLM%3D',
+            headers: { 
+              'Cookie': 'guest_id=v1%3A166080890446027164; guest_id_ads=v1%3A166080890446027164; guest_id_marketing=v1%3A166080890446027164; personalization_id="v1_V1dSLbAwLmw/L+5ExL+NWA=="'
             }
-        };
+          };
 
         const result = await axios(config)
             .then(function (response) {
                 return response.data
             })
             .catch(function (error) {
+                console.log(error);
                 return JSON.stringify(error)
             });
 
@@ -200,6 +201,7 @@ app.get('/twitter/oauth1',async(req,res)=>{
         const data = { result, oauth_token, oauth_token_secret }
         return res.json(Response(200, "success", JSON.stringify(data)))
     } catch (error) {
+        console.log(error);
         return res.status(500).json(Response(500, 'Error', err))
     }
 })
