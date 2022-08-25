@@ -197,49 +197,29 @@ app.post('/events/:id/invite', async (req, res) => {
         const event_id = req.params.id
         const event = (await db.execute('select * from aicte.events where id = ?',[event_id])).rows[0] 
         let {users,departments} = req.body
-        if (!users) {
-            return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
+        if(!departments){
+            return res.json(Response(400,"Error","Empty fields!"))
         }
-        // only email of users for mass mail
-        const emails = []
-        const phones = []
-        
-        // save to db 
-        const query = 'insert into aicte.invites (id,event_id,user_id,name,email,phone,createdat,updatedat) values (?,?,?,?,?,?,?,?)'
-        await users.forEach(async (user)=>{
-            emails.push(user.email)
-            phones.push(user.phone)
-            const timestamp = new Date().toISOString()
-            const invite_id = uuid.v4()
-            // find user 
-            const find_user = `select * from aicte.invites where user_id = ? and event_id = ? allow filtering`
-            const user_data = (await db.execute(find_user,[user.id,event_id])).rows
-            // console.log(user);
-            if (user_data.length > 0) return;
-            await db.execute(query,[invite_id,event_id,user.id,user.name,user.email,user.phone,timestamp,timestamp])
-            await logProducer.send({
-                topic:"notify",
-                messages:[{value:JSON.stringify({
-                    user_id:user.id,
-                    message:`You have been invited to ${event.name}.Please check invited events for more details.`
-                })}]
-            })
-        })
+        users = JSON.parse(users)
+
         // booking and venue details for mail
         const booking = (await db.execute('select * from aicte.bookings where event_id = ? allow filtering',[event.id])).rows[0]
         const venue = (await db.execute('select * from aicte.venues where id = ?',[booking.venue_id])).rows[0]
+        
+        const query = 'insert into aicte.invites (id,event_id,user_id,name,email,phone,createdat,updatedat) values (?,?,?,?,?,?,?,?)'
+        // invite by departments 
         await departments.forEach(async(dept)=>{
             const users_depts = (await db.execute('select * from aicte.users where department = ? allow filtering',[dept])).rows
             for (let i = 0; i < users_depts.length; i++) {
                 const ele = users_depts[i];
-                emails.push(ele.email)
-                phones.push(ele.phone)
                 const timestamp = new Date().toISOString()
                 const invite_id = uuid.v4()
                 // find user 
                 const find_user = `select * from aicte.invites where user_id = ? and event_id = ? allow filtering`
                 const user_data = (await db.execute(find_user,[ele.id,event_id])).rows
                 console.log(ele.email,ele.phone);
+                if (user_data.length > 0) return;
+                await db.execute(query,[invite_id,event_id,ele.id,ele.name,ele.email,ele.phone,timestamp,timestamp])
                 const msg = {
                     email:ele.email,
                     subject:`Invite for ${event.name}`,
@@ -265,25 +245,60 @@ app.post('/events/:id/invite', async (req, res) => {
                         message:`You have been invited to ${event.name}.Please check invited events for more details.`
                     })}]
                 })
-                if (user_data.length > 0) return;
-                await db.execute(query,[invite_id,event_id,ele.id,ele.name,ele.email,ele.phone,timestamp,timestamp])
             }
             
         })
-        // send mail to every invited user using kafka producer
-        // if invites are more than 50 then send mail in batches of 50
-        if (emails.length > 50) {
-            const batches = Math.ceil(emails.length/50)
-            for (let i = 0; i < batches; i++) {
-                // slice emails array into batches of 50 
-                let batch;
-                if((i+1)*50 > emails.length)
-                    batch = emails.slice(i*50,emails.length)
-                else
-                    batch = emails.slice(i*50,(i+1)*50)
+        if (users) {
+            // only email of users for mass mail
+            const emails = []
+            const phones = []
 
+            // save to db 
+            await users.forEach(async (user)=>{
+                emails.push(user.email)
+                phones.push(user.phone)
+                const timestamp = new Date().toISOString()
+                const invite_id = uuid.v4()
+                // find user 
+                const find_user = `select * from aicte.invites where user_id = ? and event_id = ? allow filtering`
+                const user_data = (await db.execute(find_user,[user.id,event_id])).rows
+                // console.log(user);
+                if (user_data.length > 0) return;
+                await db.execute(query,[invite_id,event_id,user.id,user.name,user.email,user.phone,timestamp,timestamp])
+                await logProducer.send({
+                    topic:"notify",
+                    messages:[{value:JSON.stringify({
+                        user_id:user.id,
+                        message:`You have been invited to ${event.name}.Please check invited events for more details.`
+                    })}]
+                })
+            })
+           
+            // send mail to every invited user using kafka producer
+            // if invites are more than 50 then send mail in batches of 50
+            if (emails.length > 50) {
+                const batches = Math.ceil(emails.length/50)
+                for (let i = 0; i < batches; i++) {
+                    // slice emails array into batches of 50 
+                    let batch;
+                    if((i+1)*50 > emails.length)
+                        batch = emails.slice(i*50,emails.length)
+                    else
+                        batch = emails.slice(i*50,(i+1)*50)
+    
+                    const msg = {
+                        email:batch,
+                        subject:`Invite for ${event.name}`,
+                        text:`You have been invited to ${event.name} on ${event.from_date} at ${event.time} Venue details are as follows: ${venue.name} ${venue.address} ${venue.city} ${venue.state} ${venue.pincode} website: ${venue.website}`,
+                    }
+                    await alertProducer.send({
+                        topic: "mass_mail",
+                        messages: [{value:JSON.stringify(msg)}],
+                    })
+                }
+            }else{
                 const msg = {
-                    email:batch,
+                    email:emails,
                     subject:`Invite for ${event.name}`,
                     text:`You have been invited to ${event.name} on ${event.from_date} at ${event.time} Venue details are as follows: ${venue.name} ${venue.address} ${venue.city} ${venue.state} ${venue.pincode} website: ${venue.website}`,
                 }
@@ -292,29 +307,20 @@ app.post('/events/:id/invite', async (req, res) => {
                     messages: [{value:JSON.stringify(msg)}],
                 })
             }
-        }else{
-            const msg = {
-                email:emails,
-                subject:`Invite for ${event.name}`,
-                text:`You have been invited to ${event.name} on ${event.from_date} at ${event.time} Venue details are as follows: ${venue.name} ${venue.address} ${venue.city} ${venue.state} ${venue.pincode} website: ${venue.website}`,
-            }
-            await alertProducer.send({
-                topic: "mass_mail",
-                messages: [{value:JSON.stringify(msg)}],
-            })
+            // send sms to every invited user using kafka producer
+            phones.forEach(async(phone) => {
+                await alertProducer.send({
+                    topic:"sms",
+                    messages:[{
+                        value:JSON.stringify({
+                            phone:phone,
+                            text:`You have been invited to ${event.name} on ${event.from_date} at ${event.time} Venue details are as follows: ${venue.name} ${venue.address} ${venue.city} ${venue.state} ${venue.pincode} website: ${venue.website}`
+                        })
+                    }]
+                })
+            });
         }
-        // send sms to every invited user using kafka producer
-        phones.forEach(async(phone) => {
-            await alertProducer.send({
-                topic:"sms",
-                messages:[{
-                    value:JSON.stringify({
-                        phone:phone,
-                        text:`You have been invited to ${event.name} on ${event.from_date} at ${event.time} Venue details are as follows: ${venue.name} ${venue.address} ${venue.city} ${venue.state} ${venue.pincode} website: ${venue.website}`
-                    })
-                }]
-            })
-        });
+        
         log.message = `invited users to event with id ${event_id}`
         res.json(Response(200, 'Success', "Invites sent successfully"))
     }catch(err){
@@ -331,7 +337,8 @@ app.post('/events/:id/invite', async (req, res) => {
 // assign tasks to users 
 app.post('/events/assigntasks',async(req,res)=>{
     try {
-        const {event_id,tasks} = req.body
+        let {event_id,tasks} = req.body
+        tasks = JSON.parse(tasks)
         if(!(event_id&&tasks)){
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
         }
