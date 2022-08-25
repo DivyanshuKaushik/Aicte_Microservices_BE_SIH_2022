@@ -1,12 +1,24 @@
 const express = require('express');
 const axios = require('axios');
-const { Response } = require('./helpers');
+const { Response, alertProducer, logProducer } = require('./helpers');
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // for parsing multipart/form-data
+
+// connect to kafka producers 
+async function connectProducers() {
+    try{
+        await alertProducer.connect();
+        await logProducer.connect();
+        console.log("producer_connected");
+    }catch(err){
+        console.log(err);
+    }
+}
+connectProducers();
 
 
 // Short-lived User access tokens are valid for one hour.
@@ -63,6 +75,13 @@ app.post('/pagedata/:id', async (req, res) => {
 })
 
 app.post('/uploadpost', async (req, res) => {
+    const user = JSON.parse(req.headers.user)
+    const log = {
+        type:"social",
+        message:"",
+        user_id:user.id,
+        user_name:user.name
+    }
     try {
         const url = req.body.url
         const caption = req.body.caption
@@ -75,7 +94,8 @@ app.post('/uploadpost', async (req, res) => {
                     `https://graph.facebook.com/v14.0/${pageid}/photos?url=${url}&access_token=${pageaccesstoken}`
                 )
                 .then((res) => { return res.data })
-            return res.json(Response(200, "success", JSON.stringify(data)))
+            log.message = "Posted to facebook"
+            res.json(Response(200, "success", JSON.stringify(data)))
 
         } else if (url && caption) {
             const data = await axios
@@ -83,7 +103,8 @@ app.post('/uploadpost', async (req, res) => {
                     `https://graph.facebook.com/v14.0/${pageid}/photos?url=${url}&message=${caption}&access_token=${pageaccesstoken}`
                 )
                 .then((res) => { return res.data })
-            return res.json(Response(200, "success", JSON.stringify(data)))
+            log.message = "Posted to facebook"
+            res.json(Response(200, "success", JSON.stringify(data)))
 
         } else if (!url && caption) {
             const data = await axios
@@ -91,15 +112,24 @@ app.post('/uploadpost', async (req, res) => {
                     `https://graph.facebook.com/v14.0/${pageid}/feed?message=${caption}&access_token=${pageaccesstoken}`
                 )
                 .then((res) => { return res.data })
-            return res.json(Response(200, "success", JSON.stringify(data)))
+            log.message = "Posted to facebook"
+            res.json(Response(200, "success", JSON.stringify(data)))
 
         } else {
-            return res.json(Response(422, "Error", JSON.stringify({ message: "Please enter a url or caption" })))
+            log.message = "Failed to post in facebook"
+            res.json(Response(422, "Error", JSON.stringify({ message: "Please enter a url or caption" })))
 
         }
     } catch (err) {
-        return res.status(500).json(Response(500, 'Error', err))
+        log.message = "Failed to post in facebook"
+        res.status(500).json(Response(500, 'Error', err))
     }
+    // log to db using kafka producer
+    await logProducer.send({
+        topic: "log",
+        messages: [{value:JSON.stringify(log)}],
+    })
+    return;
 })
 
 
@@ -205,6 +235,13 @@ app.post('/twitter/oauth2',async(req,res)=>{
 
 
 app.post('/twitter/createtweet',async(req,res)=>{
+    const user = JSON.parse(req.headers.user)
+    const log = {
+        type:"social",
+        message:"",
+        user_id:user.id,
+        user_name:user.name
+    }
     try {
         const text = req.body.text
         const mediaids = req.body.mediaids
@@ -235,19 +272,19 @@ app.post('/twitter/createtweet',async(req,res)=>{
             data: input
         };
         const data = await axios(config).then((res) => { return res.data })
-        return res.json(Response(200, "success", JSON.stringify(data)))
+        log.message = "Tweet created successfully"
+        res.json(Response(200, "success", JSON.stringify(data)))
     } catch (error) {
-        return res.status(500).json(Response(500, 'Error', err))
+        log.message = "Failed to tweet"
+        res.status(500).json(Response(500, 'Error', err))
     }
+    // log to db using kafka producer
+    await logProducer.send({
+        topic: "log",
+        messages: [{value:JSON.stringify(log)}],
+    })
+    return;
 })
-
-
-
-
-
-
-
-
 
 
 

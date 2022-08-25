@@ -3,7 +3,7 @@ const express = require('express');
 const uuid = require('uuid');
 const bcrypt = require('bcryptjs')
 const { connectDB,db } = require('./db');
-const { Response, alertProducer } = require('./helpers');
+const { Response, alertProducer,logProducer } = require('./helpers');
 
 // connect to aws keyspaces 
 connectDB()
@@ -12,6 +12,7 @@ connectDB()
 async function connectProducers() {
     try{
         await alertProducer.connect();
+        await logProducer.connect()
         console.log("producer_connected");
     }catch(err){
         console.log(err);
@@ -81,6 +82,13 @@ app.post('/users/login',async(req, res) => {
 
 // register new user 
 app.post('/users', async(req, res) => {
+    const user = JSON.parse(req.headers.user)
+    const log = {
+        type:"event_register",
+        message:"",
+        user_id:user.id,
+        user_name:user.name
+    }
     try{
         let { name, email, password,phone,role,department } = req.body
         const unhashedPassword = password;
@@ -106,11 +114,27 @@ app.post('/users', async(req, res) => {
                 text:`You have been registered to AICTE Portal. Please login to continue using credentials email: ${email} password:${unhashedPassword} Thank you.`
             })}]
         })
+        // send notification 
+        await logProducer.send({
+            topic:"notify",
+            messages:[{value:JSON.stringify({
+                user_id:id,
+                message:`Welcome to AICTE Event Management Portal`
+            })}]
+        })
+        log.message = `created new user ${name}`
         res.json(Response(200, 'Success', { id, name, email, password,phone,role,department,createdAt:timestamp,updatedAt:timestamp }))
 
     }catch(err){
+        log.message = "failed to create new user"
         res.status(500).json(Response(500, 'Error', err))
     }
+    // log to db using kafka producer
+    await logProducer.send({
+        topic: "log",
+        messages: [{value:JSON.stringify(log)}],
+    })
+    return;
 });
 
 // update user details 

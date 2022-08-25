@@ -9,7 +9,6 @@ const kafka_logs = new Kafka({
     clientId: "aicte_logs",
     brokers: [process.env.KAFKA_BROKER],
 });
-
 // kafka prodecer 
 const alertProducer = kafka_alerts.producer();
 const logProducer = kafka_logs.producer();

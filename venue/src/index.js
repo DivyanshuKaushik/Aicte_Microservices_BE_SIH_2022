@@ -87,6 +87,25 @@ app.post('/venues', async (req, res) => {
         const save_venue = "insert into aicte.venues (id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,canteen_menu,canteen_contact,createdat,updatedat,image) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
         await db.execute(save_venue,[id,name,email,phone,venue_head,state,city,address,pincode,capacity,website,canteen_menu,canteen_contact,timestamp,timestamp,image])
         log.message = `${name} registered`
+        await alertProducer.send({
+            topic: 'alert',
+            messages: [{
+                value: JSON.stringify({
+                    email:user.email,
+                    subject:"Venue Registered Successfully",
+                    text:"You have successfully registered a venue. Please login to dashboard for more details",
+                })
+         }]
+        })
+        await logProducer.send({
+            topic: 'notify',
+            messages: [{
+                value: JSON.stringify({
+                    user_id:user.id,
+                    message:`You have successfully registered ${name} to portal`,
+                })
+            }]
+        })
         res.json(Response(200, 'Success', { id, name,image, email, phone,venue_head,state, city, address, pincode, capacity, website,canteen_menu,canteen_contact, createdat:timestamp, updatedat:timestamp }))
     }
     catch (error) {
@@ -194,6 +213,14 @@ app.post('/venues/book',async(req,res)=>{
                 subject:`${event.name} requested for booking ${venue.name}`,
                 text:`${venue.name} has been requested for booking for "${event.name}" from ${from_date} to ${to_date} at ${time} please log on to portal to update status.`
             })}]
+        })
+        await logProducer.send({
+            topic:"notify",
+            messages:[{
+                value:JSON.stringify({
+                    user_id:venue.venue_head,
+                    message:`${venue.name} has been requested for booking for ${event.name}`
+                })}]
         })
         res.json(Response(200, 'Success', "Venue Requested for event"))
     } catch (error) {

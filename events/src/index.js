@@ -70,6 +70,22 @@ app.post('/events',async (req, res) => {
         const query = 'insert into aicte.events (id,name,description,caption,status,from_date,to_date,time,image,organiser,food_req,expected_count,createdat,updatedat) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
         await db.execute(query,[id,name,description,caption,status,from_date,to_date,time,image,organiser,food_req,expected_count,timestamp,timestamp])
         log.message = `created event ${name} with id ${id}`
+        await logProducer.send({
+            topic:"notify",
+            messages:[{value:JSON.stringify({
+                user_id:user.id,
+                message:`Created Event ${name}`
+            })}]
+        })
+        const msg = {
+            email:user.email,
+            subject:`Created Event ${name}`,
+            text:`Successfully created event ${name}. Please continue to the portal for venue booking and management.`,
+        }
+        await alertProducer.send({
+            topic: "alert",
+            messages: [{value:JSON.stringify(msg)}],
+        })
         res.status(200).json(Response(200, 'Success', { id, name, description, caption, status, from_date, to_date, time, image,organiser,food_req,expected_count, createdat: timestamp, updatedat: timestamp }))
     }
     catch (error) {
@@ -201,6 +217,13 @@ app.post('/events/:id/invite', async (req, res) => {
             // console.log(user);
             if (user_data.length > 0) return;
             await db.execute(query,[invite_id,event_id,user.id,user.name,user.email,user.phone,timestamp,timestamp])
+            await logProducer.send({
+                topic:"notify",
+                messages:[{value:JSON.stringify({
+                    user_id:user.id,
+                    message:`You have been invited to ${event.name}.Please check invited events for more details.`
+                })}]
+            })
         })
         // booking and venue details for mail
         const booking = (await db.execute('select * from aicte.bookings where event_id = ? allow filtering',[event.id])).rows[0]
@@ -234,6 +257,13 @@ app.post('/events/:id/invite', async (req, res) => {
                             text:`You have been invited to ${event.name} on ${event.from_date} at ${event.time} Venue details are as follows: ${venue.name} ${venue.address} ${venue.city} ${venue.state} ${venue.pincode} website: ${venue.website}`
                         })
                     }]
+                })
+                await logProducer.send({
+                    topic:"notify",
+                    messages:[{value:JSON.stringify({
+                        user_id:ele.id,
+                        message:`You have been invited to ${event.name}.Please check invited events for more details.`
+                    })}]
                 })
                 if (user_data.length > 0) return;
                 await db.execute(query,[invite_id,event_id,ele.id,ele.name,ele.email,ele.phone,timestamp,timestamp])
@@ -311,12 +341,21 @@ app.post('/events/assigntasks',async(req,res)=>{
             const timestamp = new Date().toISOString()
             const query = "insert into aicte.event_tasks (id,event_id,user_id,user_name,user_email,task,createdat) values (?,?,?,?,?,?,?)"
             await db.execute(query,[id,event_id,task.id,task.name,task.email,task.task,timestamp])
+            // email 
             await alertProducer.send({
                 topic: 'alert',
                 messages: [{value: JSON.stringify({
                     email: task.email,
                     subject:`Your tasks for event ${event.name}`,
                     text:`Your task is to ${task.task}`
+                })}]
+            })
+            // notify 
+            await logProducer.send({
+                topic:"notify",
+                messages:[{value:JSON.stringify({
+                    user_id:task.id,
+                    message:`You have been assigned task for ${event.name}.`
                 })}]
             })
         })
