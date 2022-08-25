@@ -186,12 +186,12 @@ app.delete('/events/:id', async (req, res) => {
 
 // invite user to event 
 app.post('/events/:id/invite', async (req, res) => {
-    const user = JSON.parse(req.headers.user)
+    const user_in = JSON.parse(req.headers.user)
     const log = {
         type:"event_invite",
         message:"",
-        user_id:user.id,
-        user_name:user.name
+        user_id:user_in.id,
+        user_name:user_in.name
     }
     try{
         const event_id = req.params.id
@@ -200,8 +200,7 @@ app.post('/events/:id/invite', async (req, res) => {
         if(!departments){
             return res.json(Response(400,"Error","Empty fields!"))
         }
-        users = JSON.parse(users)
-
+        console.log(req.body);
         // booking and venue details for mail
         const booking = (await db.execute('select * from aicte.bookings where event_id = ? allow filtering',[event.id])).rows[0]
         const venue = (await db.execute('select * from aicte.venues where id = ?',[booking.venue_id])).rows[0]
@@ -249,6 +248,7 @@ app.post('/events/:id/invite', async (req, res) => {
             
         })
         if (users) {
+            users = JSON.parse(users)
             // only email of users for mass mail
             const emails = []
             const phones = []
@@ -324,6 +324,7 @@ app.post('/events/:id/invite', async (req, res) => {
         log.message = `invited users to event with id ${event_id}`
         res.json(Response(200, 'Success', "Invites sent successfully"))
     }catch(err){
+        console.log(err);
         log.message = "error in inviting users to event with id "+req.params.id
         res.status(500).json(Response(500, 'Error', err))
     }

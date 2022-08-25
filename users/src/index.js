@@ -144,6 +144,56 @@ app.post('/users',[check('email',"Enter valid Email!").notEmpty().isEmail(),chec
     })
     return;
 });
+function generatePassword() {
+    var length = 8,
+        charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#@",
+        retVal = "";
+    for (var i = 0, n = charset.length; i < length; ++i) {
+        retVal += charset.charAt(Math.floor(Math.random() * n));
+    }
+    return retVal;
+}
+// create mass users 
+app.post('/createMassUsers',async(req,res)=>{
+    try{
+        const users = JSON.parse(req.body.users)
+        for(let i = 0; i < users.length; i++){
+            const {name, email,phone,role,department} = users[i]
+            const id = uuid.v4()
+            let password = generatePassword()
+            const unhashedPassword = password;
+            password = await bcrypt.hash(password,12)
+            const findUser = "select * from aicte.users where email = ? allow filtering"
+            const existing_user = await db.execute(findUser,[email])
+            if (existing_user.rows.length){
+                continue;
+            }
+            const timestamp = new Date().toISOString()
+            const save_user = `insert into aicte.users (id,name,email,phone,role,password,department,createdat,updatedat) values (?,?,?,?,?,?,?,?,?)`
+            await db.execute(save_user,[id,name, email,phone,role,password,department,timestamp,timestamp])
+            // send mail to user 
+            await alertProducer.send({
+                topic: 'alert',
+                messages: [{value: JSON.stringify({
+                    email,
+                    subject:`Welcome to AICTE Portal`,
+                    text:`You have been registered to AICTE Portal. Please login to continue using credentials email: ${email} password:${unhashedPassword} Thank you.`
+                })}]
+            })
+            // send notification 
+            await logProducer.send({
+                topic:"notify",
+                messages:[{value:JSON.stringify({
+                    user_id:id,
+                    message:`Welcome to AICTE Event Management Portal`
+                })}]
+            })
+        }
+        res.json(Response(200, 'Success', 'Users created successfully'))
+    }catch(err){
+        res.status(500).json(Response(500, 'Error', err))
+    }
+})
 
 // update user details 
 app.put('/users/:id', async(req, res) => {

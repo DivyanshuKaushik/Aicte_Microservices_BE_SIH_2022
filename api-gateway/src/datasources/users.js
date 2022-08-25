@@ -33,6 +33,15 @@ class usersAPI extends RESTDataSource {
       throw Error(JSON.stringify(error.extensions.response.body))
     }
   }
+  async createMassUsers(users){
+    try {
+      return await this.post(`/createMassUsers`,users)
+    } catch (error) {
+      throw Error(JSON.stringify(error.extensions.response.body))
+    }
+  }
+
+
 
   async updateUser(user){
     try {

@@ -39,6 +39,7 @@ const typeDefs = gql`
     updatePassword(id:ID!,password:String!): String!
     deleteUser(id:ID!): String! 
     updateProfileImage(id:ID!,image:String!) : String!
+    createMassUsers(users:String!): String!
   }
 `
 const resolvers = {
@@ -116,6 +117,14 @@ const resolvers = {
             try{
                 req.user = await isAuthenticated(req)
                 return (await dataSources.usersAPI.updateUserProfile(args)).data;
+            }catch(err){
+                throw new UserInputError(err)
+            }
+        },
+        async createMassUsers(_,args,{dataSources,req},info){
+            try{
+                req.user = await isAdmin(req)
+                return (await dataSources.usersAPI.createMassUsers(args)).data;
             }catch(err){
                 throw new UserInputError(err)
             }
