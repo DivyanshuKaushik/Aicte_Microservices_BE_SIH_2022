@@ -10,28 +10,41 @@ class chatAPI extends RESTDataSource {
   }
 
   async getMessages(seconduser) {
-    return await this.get(`/getMessages/${seconduser}`);
+    try{
+      return await this.get(`/getMessages/${seconduser}`);
+    }catch(err){
+      throw new Error(JSON.stringify(err))
+    }
   }
 
   async sendMessage(data) {
     try {
       return await this.post(`/sendMessage`,data)
     } catch (error) {
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
   async sendCommonMessage(data) {
     try {
       return await this.post(`/commonChat`,data)
     } catch (error) {
-      throw Error(JSON.stringify(error.extensions.response.body))
+      console.log("data",error);
+      throw Error(JSON.stringify(error))
     }
   }
   async getCommonMessages() {
-    return await this.get(`/commonChats`);
+    try{
+      return await this.get(`/commonChats`);
+    }catch(err){
+      throw new Error(JSON.stringify(err))
+    }
   }
   async getInbox() {
-    return await this.get(`/inbox`);
+    try{
+      return await this.get(`/inbox`);
+    }catch(err){
+      throw new Error(JSON.stringify(err))
+    }
   }
   
 }

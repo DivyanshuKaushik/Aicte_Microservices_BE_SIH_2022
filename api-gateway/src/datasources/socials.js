@@ -13,28 +13,28 @@ class socialsAPI extends RESTDataSource {
         try {
             return await this.post('/getlonglivedaccesstoken',shortlivedaccesstoken);
         } catch (error) {
-            throw Error(JSON.stringify(error.extensions.response.body))
+            throw Error(JSON.stringify(error))
         }
     }
     async fbGetUserPages(longlivedaccesstoken){
         try {
             return await this.get(`/getuserpages/${longlivedaccesstoken}`);
         } catch (error) {
-            throw Error(JSON.stringify(error.extensions.response.body))
+            throw Error(JSON.stringify(error))
         }
     }
     async fbPageData(data){
         try {
             return await this.post(`/pagedata/${data.id}`,data)
         } catch (error) {
-            throw Error(JSON.stringify(error.extensions.response.body))
+            throw Error(JSON.stringify(error))
         }
     }
     async fbUploadPost(data){
         try {
             return await this.post(`/uploadpost`,data)
         } catch (error) {
-            throw Error(JSON.stringify(error.extensions.response.body))
+            throw Error(JSON.stringify(error))
         }
     }
 
@@ -42,7 +42,7 @@ class socialsAPI extends RESTDataSource {
         try {
             return await this.post(`/twitter/createtweet`,data)
         } catch (error) {
-            throw Error(JSON.stringify(error.extensions.response.body))
+            throw Error(JSON.stringify(error))
         }
     }
 
@@ -50,7 +50,7 @@ class socialsAPI extends RESTDataSource {
         try {
             return await this.post(`/twitter/oauth2`,data)
         } catch (error) {
-            throw Error(JSON.stringify(error.extensions.response.body))
+            throw Error(JSON.stringify(error))
         }
     }
 
@@ -58,21 +58,21 @@ class socialsAPI extends RESTDataSource {
         try {
             return await this.get(`/twitter/oauth1`);
         } catch (error) {
-            throw Error(JSON.stringify(error.extensions.response.body))
+            throw Error(JSON.stringify(error))
         }
     }
     async twGetUserDetails(userid){
         try {
             return await this.get(`/twitter/getuserdetails/${userid}`);
         } catch (error) {
-            throw Error(JSON.stringify(error.extensions.response.body))
+            throw Error(JSON.stringify(error))
         }
     }
     async getHashtags(image){
         try {
             return await this.get(`/hashtags`,image)
         } catch (error) {
-            throw Error(JSON.stringify(error.extensions.response.body))
+            throw Error(JSON.stringify(error))
         }
     }
 

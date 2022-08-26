@@ -82,6 +82,7 @@ const resolvers = {
                 req.user = await isAuthenticated(req)
                 return (await dataSources.chatAPI.sendCommonMessage(args)).data;
             }catch(err){
+                console.log("services",err);
                 throw new UserInputError(err)
             }
         }

@@ -120,6 +120,7 @@ app.post("/sendMessage", async (req, res) => {
             .status(200)
             .json(Response(200, "Success", "Sent successfully"));
     } catch (error) {
+        console.log(error);
         return res.status(500).json(Response(500, "Error", error));
     }
 });
@@ -139,6 +140,7 @@ app.post('/commonChat', async (req, res) => {
             .status(200)
             .json(Response(200, "Success", "Sent successfully"));
     } catch (error) {
+        console.log(error);
         return res.status(500).json(Response(500, "Error", error));
     }
 })
