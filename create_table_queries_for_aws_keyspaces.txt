@@ -1,0 +1,194 @@
+CREATE TABLE "aicte"."bookings"(
+	"id" uuid,
+	"createdat" text,
+	"venue_head" uuid static,
+	"venue_id" uuid static,
+	"from_date" text,
+	"to_date" text,
+	"status" text,
+	"time" text,
+	"updatedat" text,
+	"event_id" uuid,
+	PRIMARY KEY("id", "createdat"))
+WITH CUSTOM_PROPERTIES = {
+	'capacity_mode':{
+		'throughput_mode':'PAY_PER_REQUEST'
+	}, 
+	'point_in_time_recovery':{
+		'status':'enabled'
+	}, 
+	'encryption_specification':{
+		'encryption_type':'AWS_OWNED_KMS_KEY'
+	}
+} AND CLUSTERING ORDER BY("createdat" DESC)
+
+CREATE TABLE "aicte"."invites"(
+	"id" uuid,
+	"createdat" text,
+	"updatedat" text,
+	"event_id" uuid static,
+	"user_id" uuid static,
+	"name" text,
+	"phone" text,
+	"email" text,
+	PRIMARY KEY("id", "createdat"))
+WITH CUSTOM_PROPERTIES = {
+	'capacity_mode':{
+		'throughput_mode':'PAY_PER_REQUEST'
+	}, 
+	'point_in_time_recovery':{
+		'status':'enabled'
+	}, 
+	'encryption_specification':{
+		'encryption_type':'AWS_OWNED_KMS_KEY'
+	}
+} AND CLUSTERING ORDER BY("createdat" DESC)
+
+CREATE TABLE "aicte"."logs"(
+	"id" uuid,
+	"timestamp" text,
+	"user_name" text static,
+	"user_id" uuid static,
+	"type" text,
+	"message" text,
+	PRIMARY KEY("id", "timestamp"))
+WITH CUSTOM_PROPERTIES = {
+	'capacity_mode':{
+		'throughput_mode':'PAY_PER_REQUEST'
+	}, 
+	'point_in_time_recovery':{
+		'status':'enabled'
+	}, 
+	'encryption_specification':{
+		'encryption_type':'AWS_OWNED_KMS_KEY'
+	}
+} AND CLUSTERING ORDER BY("timestamp" DESC)
+
+CREATE TABLE "aicte"."notifications"(
+	"id" uuid,
+	"createdat" text,
+	"user_id" uuid static,
+	"message" text,
+	PRIMARY KEY("id", "createdat"))
+WITH CUSTOM_PROPERTIES = {
+	'capacity_mode':{
+		'throughput_mode':'PAY_PER_REQUEST'
+	}, 
+	'point_in_time_recovery':{
+		'status':'enabled'
+	}, 
+	'encryption_specification':{
+		'encryption_type':'AWS_OWNED_KMS_KEY'
+	}
+} AND CLUSTERING ORDER BY("createdat" DESC)
+
+CREATE TABLE "aicte"."venues"(
+	"id" uuid,
+	"createdat" text,
+	"venue_head" uuid static,
+	"resources" list<text>,
+	"website" text,
+	"updatedat" text,
+	"state" text,
+	"pincode" text,
+	"phone" text,
+	"name" text,
+	"image" text,
+	"email" text,
+	"city" text,
+	"capacity" text,
+	"canteen_menu" text,
+	"canteen_contact" text,
+	"address" text,
+	PRIMARY KEY("id", "createdat"))
+WITH CUSTOM_PROPERTIES = {
+	'capacity_mode':{
+		'throughput_mode':'PAY_PER_REQUEST'
+	}, 
+	'point_in_time_recovery':{
+		'status':'enabled'
+	}, 
+	'encryption_specification':{
+		'encryption_type':'AWS_OWNED_KMS_KEY'
+	}
+} AND CLUSTERING ORDER BY("createdat" DESC)
+
+
+
+CREATE TABLE "aicte"."feedbacks"(
+	"id" uuid,
+	"createdat" text,
+	"event_id" uuid static,
+	"venue" text,
+	"user_name" text,
+	"user_id" uuid,
+	"user_email" text,
+	"suggestion" text,
+	"overall" text,
+	"coordination" text,
+	"canteen" text,
+	PRIMARY KEY("id", "createdat"))
+WITH CUSTOM_PROPERTIES = {
+	'capacity_mode':{
+		'throughput_mode':'PAY_PER_REQUEST'
+	}, 
+	'point_in_time_recovery':{
+		'status':'enabled'
+	}, 
+	'encryption_specification':{
+		'encryption_type':'AWS_OWNED_KMS_KEY'
+	}
+} AND CLUSTERING ORDER BY("createdat" ASC)
+
+
+CREATE TABLE "aicte"."users"(
+	"id" uuid,
+	"name" text,
+	"email" text,
+	"password" text,
+	"image" text,
+	"phone" text,
+	"role" text,
+	"department" text,
+	"createdat" text,
+	"updatedat" text,
+	PRIMARY KEY("id"))
+WITH CUSTOM_PROPERTIES = {
+	'capacity_mode':{
+		'throughput_mode':'PAY_PER_REQUEST'
+	}, 
+	'point_in_time_recovery':{
+		'status':'enabled'
+	}, 
+	'encryption_specification':{
+		'encryption_type':'AWS_OWNED_KMS_KEY'
+	}
+}
+
+CREATE TABLE "aicte"."events"(
+	"id" uuid,
+	"name" text,
+	"image" text,
+	"caption" text,
+	"description" text,
+	"expected_count" text,
+	"food_req" text,
+	"from_date" text,
+	"to_date" text,
+	"time" text,
+	"organiser" uuid,
+	"status" text,
+	"createdat" text,
+	"updatedat" text,
+	PRIMARY KEY("id"))
+WITH CUSTOM_PROPERTIES = {
+	'capacity_mode':{
+		'throughput_mode':'PAY_PER_REQUEST'
+	}, 
+	'point_in_time_recovery':{
+		'status':'enabled'
+	}, 
+	'encryption_specification':{
+		'encryption_type':'AWS_OWNED_KMS_KEY'
+	}
+}
