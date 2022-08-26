@@ -21,7 +21,7 @@ class eventsAPI extends RESTDataSource {
     try {
       return await this.post(`/events`,event)
     } catch (error) {
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
 
@@ -29,7 +29,7 @@ class eventsAPI extends RESTDataSource {
     try {
       return await this.put(`/events/${event.id}`,event)
     } catch (error) {
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
 
@@ -37,7 +37,7 @@ class eventsAPI extends RESTDataSource {
     try{
       return await this.delete(`/events/${id}`);
     }catch(error){
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
 
@@ -45,7 +45,7 @@ class eventsAPI extends RESTDataSource {
     try{
       return await this.post(`/events/${data.event_id}/invite`,data);
     }catch(error){
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
 
@@ -53,7 +53,7 @@ class eventsAPI extends RESTDataSource {
     try{
       return await this.get(`/events/${event_id}/invites`);
     }catch(error){
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
   
@@ -61,21 +61,21 @@ class eventsAPI extends RESTDataSource {
     try{
       return await this.get(`/events/invited/${user_id}`);
     }catch(error){
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
   async assignTasks(data){
     try{
       return await this.post(`/events/assigntasks`,data);
     }catch(error){
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
   async getTasksByEvent(event_id){
     try{
       return await this.get(`/events/tasks/event/${event_id}`);
     }catch(error){
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
   async getTasksByUser(user_id){
@@ -83,28 +83,28 @@ class eventsAPI extends RESTDataSource {
     try{
       return await this.get(`/events/tasks/user/${user_id}`);
     }catch(error){
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
   async updateEventStatus(args){
     try{
       return await this.put(`/events/${args.id}/status`,args);
     }catch(error){
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
   async submitFeedback(data){
     try{
       return await this.post(`/events/feedback`,data);
     }catch(error){
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
   async getFeedbacks(event_id){
     try{
       return await this.get(`/events/feedback/${event_id}`);
     }catch(error){
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
 }

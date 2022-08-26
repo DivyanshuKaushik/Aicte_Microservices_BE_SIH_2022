@@ -15,7 +15,7 @@ class mailAPI extends RESTDataSource {
       return await this.post(`/massMailer`,data)
     } catch (error) {
       console.log(error);
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
 }

@@ -152,6 +152,8 @@ CREATE TABLE "aicte"."users"(
 	"department" text,
 	"createdat" text,
 	"updatedat" text,
+	"org_id" uuid,
+	"org_name" text,
 	PRIMARY KEY("id"))
 WITH CUSTOM_PROPERTIES = {
 	'capacity_mode':{

@@ -51,6 +51,19 @@ app.get('/users/:id', async(req, res) => {
     res.status(200).json(Response(200, 'Success', data))
 });
 
+// get user by org 
+app.get('/users/org/:id', async(req, res) => {
+    try{
+        const query = 'select * from aicte.users where org_id = ? allow filtering'
+        const data = (await db.execute(query,[req.params.id])).rows
+        res.status(200).json(Response(200, 'Success', data))
+
+    }catch(err){
+        console.log(err);
+        res.status(500).json(Response(500, 'Error', err))
+    }
+})
+
 // update profile image 
 app.put('/users/profile/:id',async (req,res)=>{
     try{
@@ -87,20 +100,20 @@ app.post('/users',[check('email',"Enter valid Email!").notEmpty().isEmail(),chec
     if (!errors.isEmpty()) {
         return res.status(400).json(Response(400, 'Bad request', errors.array()));
     }
-    const user = JSON.parse(req.headers.user)
-    const log = {
-        type:"event_register",
-        message:"",
-        user_id:user.id,
-        user_name:user.name
-    }
+    // const user = JSON.parse(req.headers.user)
+    // const log = {
+    //     type:"event_register",
+    //     message:"",
+    //     user_id:user.id,
+    //     user_name:user.name
+    // }
     try{
-        let { name, email, password,phone,role,department } = req.body
+        let { name, email, password,phone,role,department,org_id,org_name } = req.body
         const unhashedPassword = password;
         if(password.length < 8){
             return res.status(400).json(Response(400, 'Bad Request', 'Password must be atleast 8 characters long'))
         }
-        if (!(name &&  email &&  password && phone && role && department)){
+        if (!(name &&  email &&  password && phone && role && department && org_id && org_name)) {
             return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
         }
         const findUser = "select * from aicte.users where email = ? allow filtering"
@@ -111,14 +124,86 @@ app.post('/users',[check('email',"Enter valid Email!").notEmpty().isEmail(),chec
         const id = uuid.v4()
         password = await bcrypt.hash(password,12)
         const timestamp = new Date().toISOString()
-        const save_user = `insert into aicte.users (id,name,email,phone,role,password,department,createdAt,updatedAt) values (?,?,?,?,?,?,?,?,?)`
-        await db.execute(save_user,[id,name, email,phone,role,password,department,timestamp,timestamp])
+        const save_user = `insert into aicte.users (id,name,email,phone,role,password,department,org_id,org_name,createdat,updatedat) values (?,?,?,?,?,?,?,?,?,?,?)`
+        await db.execute(save_user,[id,name, email,phone,role,password,department,org_id,org_name,timestamp,timestamp])
         // send mail to user 
         await alertProducer.send({
             topic: 'alert',
             messages: [{value: JSON.stringify({
                 email,
-                subject:`Welcome to AICTE Portal`,
+                subject:`Welcome to AICTE Portal ${org_name==="aicte" ? "." : "for " + org_name}`,
+                text:`You have been registered to AICTE Portal. Please login to continue using credentials email: ${email} password:${unhashedPassword} Thank you.`
+            })}]
+        })
+        // send notification 
+        // await logProducer.send({
+        //     topic:"notify",
+        //     messages:[{value:JSON.stringify({
+        //         user_id:id,
+        //         message:`Welcome to AICTE Event Management Portal`
+        //     })}]
+        // })
+        // log.message = `created new user ${name}`
+        res.json(Response(200, 'Success', { id, name, email, password,phone,role,department,org_id,org_name,createdat:timestamp,updatedat:timestamp }))
+
+    }catch(err){
+        console.log(err);
+        // log.message = "failed to create new user"
+        res.status(500).json(Response(500, 'Error', err))
+    }
+    // log to db using kafka producer
+    // await logProducer.send({
+    //     topic: "log",
+    //     messages: [{value:JSON.stringify(log)}],
+    // })
+    // return;
+});
+function generatePassword() {
+    var length = 8,
+        charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#@",
+        retVal = "";
+    for (var i = 0, n = charset.length; i < length; ++i) {
+        retVal += charset.charAt(Math.floor(Math.random() * n));
+    }
+    return retVal;
+}
+// create org user 
+app.post('/users/org',[check('email',"Enter valid Email!").notEmpty().isEmail()], async(req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json(Response(400, 'Bad request', errors.array()));
+    }
+    const user = JSON.parse(req.headers.user)
+    const log = {
+        type:"user_register",
+        message:"",
+        user_id:user.id,
+        user_name:user.name
+    }
+    try{
+        const { name, org_name,email ,phone } = req.body
+        if (!(name &&  email && phone)) {
+            return res.status(400).json(Response(400, 'Bad Request', 'Please fill all the fields'))
+        }
+        const findUser = "select * from aicte.users where email = ? allow filtering"
+        const existing_user = await db.execute(findUser,[email])
+        if (existing_user.rows.length){
+            return res.status(400).json(Response(400, 'Bad Request', 'User already exists'))
+        }
+        let password = generatePassword()
+        const unhashedPassword = password;
+        const id = uuid.v4()
+        password = await bcrypt.hash(password,12)
+        const role = 'poc'
+        const timestamp = new Date().toISOString()
+        const save_user = `insert into aicte.users (id,name,email,phone,role,password,org_id,org_name,createdat,updatedat) values (?,?,?,?,?,?,?,?,?,?)`
+        await db.execute(save_user,[id,name, email,phone,role,password,id,org_name,timestamp,timestamp])
+        // send mail to user 
+        await alertProducer.send({
+            topic: 'alert',
+            messages: [{value: JSON.stringify({
+                email,
+                subject:`Welcome to AICTE Portal for ${org_name}`,
                 text:`You have been registered to AICTE Portal. Please login to continue using credentials email: ${email} password:${unhashedPassword} Thank you.`
             })}]
         })
@@ -131,9 +216,10 @@ app.post('/users',[check('email',"Enter valid Email!").notEmpty().isEmail(),chec
             })}]
         })
         log.message = `created new user ${name}`
-        res.json(Response(200, 'Success', { id, name, email, password,phone,role,department,createdAt:timestamp,updatedAt:timestamp }))
+        res.json(Response(200, 'Success', { id, name, email, password,phone,role,department,org_id,org_name,createdat:timestamp,updatedat:timestamp }))
 
     }catch(err){
+        console.log(err);
         log.message = "failed to create new user"
         res.status(500).json(Response(500, 'Error', err))
     }
@@ -144,22 +230,13 @@ app.post('/users',[check('email',"Enter valid Email!").notEmpty().isEmail(),chec
     })
     return;
 });
-function generatePassword() {
-    var length = 8,
-        charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#@",
-        retVal = "";
-    for (var i = 0, n = charset.length; i < length; ++i) {
-        retVal += charset.charAt(Math.floor(Math.random() * n));
-    }
-    return retVal;
-}
 // create mass users 
 app.post('/createMassUsers',async(req,res)=>{
     try{
         const users = JSON.parse(req.body.users)
         for(let i = 0; i < users.length; i++){
-            const {name, email,phone,role,department} = users[i]
-            if(!(name &&  email &&  phone && role && department)){
+            const {name, email,phone,role,department,org_id,org_name} = users[i]
+            if(!(name &&  email &&  phone && role && department && org_id && org_name)){
                 continue
             }
             const id = uuid.v4()
@@ -172,14 +249,14 @@ app.post('/createMassUsers',async(req,res)=>{
                 continue;
             }
             const timestamp = new Date().toISOString()
-            const save_user = `insert into aicte.users (id,name,email,phone,role,password,department,createdat,updatedat) values (?,?,?,?,?,?,?,?,?)`
-            await db.execute(save_user,[id,name, email,phone,role,password,department,timestamp,timestamp])
+            const save_user = `insert into aicte.users (id,name,email,phone,role,password,department,org_id,org_name,createdat,updatedat) values (?,?,?,?,?,?,?,?,?,?,?)`
+            await db.execute(save_user,[id,name, email,phone,role,password,department,org_id,org_name,timestamp,timestamp])
             // send mail to user 
             await alertProducer.send({
                 topic: 'alert',
                 messages: [{value: JSON.stringify({
                     email,
-                    subject:`Welcome to AICTE Portal`,
+                    subject:`Welcome to AICTE Portal for ${org_name}`,
                     text:`You have been registered to AICTE Portal. Please login to continue using credentials email: ${email} password:${unhashedPassword} Thank you.`
                 })}]
             })

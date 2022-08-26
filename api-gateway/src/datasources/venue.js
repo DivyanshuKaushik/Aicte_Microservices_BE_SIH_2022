@@ -26,7 +26,7 @@ class venueAPI extends RESTDataSource {
     try {
       return await this.post(`/venues`,venue)
     } catch (error) {
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
 
@@ -34,7 +34,7 @@ class venueAPI extends RESTDataSource {
     try {
       return await this.put(`/venues/${venue.id}`,venue)
     } catch (error) {
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
 
@@ -42,7 +42,7 @@ class venueAPI extends RESTDataSource {
     try{
       return await this.delete(`/venues/${id}`);
     }catch(error){
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
 
@@ -50,7 +50,7 @@ class venueAPI extends RESTDataSource {
     try{
       return await this.post(`/venues/book`,data);
     }catch(error){
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
 
@@ -58,7 +58,7 @@ class venueAPI extends RESTDataSource {
     try{
       return await this.put(`/venues/book/status`,data);
     }catch(error){
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
 
@@ -68,7 +68,7 @@ class venueAPI extends RESTDataSource {
         booking_id:id
       });
     }catch(error){
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
   async getVenueBookingDetailsByEventId(id){
@@ -77,7 +77,7 @@ class venueAPI extends RESTDataSource {
         event_id:id
       });
     }catch(error){
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
 
@@ -85,14 +85,14 @@ class venueAPI extends RESTDataSource {
     try{
       return await this.get(`/venues/bookings/${id}`);
     }catch(error){
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
   async getAvailableVenues(args){
     try {
       return await this.get(`/venues/available`,args);
     } catch (error) {
-      throw Error(JSON.stringify(error.extensions.response.body))
+      throw Error(JSON.stringify(error))
     }
   }
 }

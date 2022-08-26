@@ -14,6 +14,8 @@ const typeDefs = gql`
         createdat: String
         updatedat: String
         image: String
+        org_id:ID
+        org_name:String
     }
     type AuthUser{
         id: ID
@@ -26,20 +28,24 @@ const typeDefs = gql`
         updatedat: String
         token: String
         image: String
+        org_id:ID
+        org_name:String
     }
     extend type Query {
         getUsers: [User]
         getUser(id: ID!): User
         getUsersByDepartment(department:String!) : [User]
+        getUsersByOrg(id: ID!): [User]
     }
     extend type Mutation{
-    registerUser( email: String!, phone: String!, name: String!, department:String!, role: String, password: String!): User
+    registerUser( email: String!, phone: String!, name: String!, department:String!, role: String, password: String!,org_id:ID!,org_name:String!): User
     loginUser(email: String!,password: String!) : AuthUser!
     updateUser(id:ID!,name:String!,email:String,role:String!,department:String!,phone:String!): String! 
     updatePassword(id:ID!,password:String!): String!
     deleteUser(id:ID!): String! 
     updateProfileImage(id:ID!,image:String!) : String!
     createMassUsers(users:String!): String!
+    registerOrgUser(email: String!, phone: String!, name: String!,org_name:String!): User
   }
 `
 const resolvers = {
@@ -65,6 +71,14 @@ const resolvers = {
             try {
                 req.user = await isAuthenticated(req)
                 return (await dataSources.usersAPI.getUsersByDepartment(department)).data;
+            } catch (error) {
+                throw new Error(error);
+            }
+        },
+        async getUsersByOrg(_,{id},{dataSources,req}){
+            try {
+                req.user = await isAuthenticated(req)
+                return (await dataSources.usersAPI.getUsersByOrg(id)).data;
             } catch (error) {
                 throw new Error(error);
             }
@@ -125,6 +139,14 @@ const resolvers = {
             try{
                 req.user = await isAdmin(req)
                 return (await dataSources.usersAPI.createMassUsers(args)).data;
+            }catch(err){
+                throw new UserInputError(err)
+            }
+        },
+        async registerOrgUser(_,args,{dataSources,req},info){
+            try{
+                req.user = await isAdmin(req)
+                return (await dataSources.usersAPI.registerOrgUser(args)).data;
             }catch(err){
                 throw new UserInputError(err)
             }
