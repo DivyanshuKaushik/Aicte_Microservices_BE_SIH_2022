@@ -1,5 +1,6 @@
 const express = require('express');
 const axios = require('axios');
+const vision = require('@google-cloud/vision');
 const { Response, alertProducer, logProducer } = require('./helpers');
 
 const app = express();
@@ -7,6 +8,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // for parsing multipart/form-data
+
+
+const client = new vision.ImageAnnotatorClient();
 
 // connect to kafka producers 
 async function connectProducers() {
@@ -19,6 +23,26 @@ async function connectProducers() {
     }
 }
 connectProducers();
+
+app.get('/hashtags', async(req, res) => {
+    try{
+        const { image } = req.query
+        const [result] = await client.labelDetection(
+            image
+          );
+          const labels = result.labelAnnotations;
+          let data = ""
+            labels.forEach(label => (data += "#"+label.description + " "));
+        //   labels.forEach(label => console.log(label.description));
+        // const d = await client.textDetection(image);
+        // const text = d[0];
+        // console.log(text);
+        return res.status(200).json(Response(200, 'Success', data))
+    }catch(error){
+        console.log(error);
+        res.status(500).json(Response(500, 'Error', error))
+    }  
+})
 
 
 // Short-lived User access tokens are valid for one hour.

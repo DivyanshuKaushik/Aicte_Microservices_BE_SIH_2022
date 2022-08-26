@@ -7,6 +7,7 @@ const typeDefs = gql`
         fbGetUserPages(longlivedaccesstoken: String!): String!
         twOauth1:String!
         twGetUserDetails(userid:String!):String!
+        getHashtags(image:String!):String!
 
     }
     extend type Mutation{
@@ -45,6 +46,14 @@ const resolvers = {
                 throw new Error(error);
             }
         },
+        async getHashtags(_, args, { dataSources, req }, info) {
+            try {
+                req.user = await isAuthenticated(req)
+                return (await dataSources.socialsAPI.getHashtags(args)).data;
+            } catch (error) {
+                throw new Error(error);
+            }
+        }
     },
     Mutation:{
         async fbGetLongLivedAccessToken(_,args,{dataSources,req},info){

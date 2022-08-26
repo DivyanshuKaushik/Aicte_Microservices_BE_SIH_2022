@@ -68,6 +68,13 @@ class socialsAPI extends RESTDataSource {
             throw Error(JSON.stringify(error.extensions.response.body))
         }
     }
+    async getHashtags(image){
+        try {
+            return await this.get(`/hashtags`,image)
+        } catch (error) {
+            throw Error(JSON.stringify(error.extensions.response.body))
+        }
+    }
 
 }
 module.exports = socialsAPI;
