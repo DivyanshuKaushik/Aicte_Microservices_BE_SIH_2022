@@ -40,7 +40,7 @@ app.get('/hashtags', async(req, res) => {
         return res.status(200).json(Response(200, 'Success', data))
     }catch(error){
         console.log(error);
-        res.status(500).json(Response(500, 'Error', error))
+        return res.status(500).json(Response(500, 'Error', error))
     }  
 })
 
@@ -67,6 +67,7 @@ app.post('/getlonglivedaccesstoken', async (req, res) => {
         }
         return res.json(Response(200, "success", JSON.stringify(data)))
     } catch (err) {
+        console.log(err);
         return res.status(500).json(Response(500, 'Error', err))
     }
 })
@@ -80,6 +81,7 @@ app.get('/getuserpages/:longlivedaccesstoken', async (req, res) => {
         console.log(data);
         return res.json(Response(200, "success", JSON.stringify(data)))
     } catch (err) {
+        console.log(err);
         return res.status(500).json(Response(500, 'Error', err))
 
     }
@@ -93,6 +95,7 @@ app.post('/pagedata/:id', async (req, res) => {
         const data = await axios.get(`https://graph.facebook.com/v14.0/${pageid}?fields=feed{created_time,from,full_picture,icon,id,message,message_tags,place,shares,story,story_tags,attachments{description,description_tags,media,media_type,title,type,subattachments,url,target},comments{attachment,comment_count,created_time,from,id,like_count,message,message_tags,reactions{name,type,username,pic,id},user_likes,likes{pic,name,username,id,link},comments{message,from},permalink_url},likes{pic,name,link,id,username},permalink_url,reactions{pic,name,type,id,link,username},properties,sharedposts,to{pic,username,name,link,id},status_type},access_token,can_post,category,category_list,followers_count,id,is_always_open,name,name_with_location_descriptor,page_token,unread_message_count,unread_notif_count,unseen_message_count,username,verification_status,website,conversations{id,link,can_reply,former_participants,is_subscribed,message_count,name,participants,senders,snippet,wallpaper,updated_time,unread_count,subject,messages{created_time,from,id,is_unsupported,sticker,message,story,tags,to,attachments{file_url,size,video_data,name,image_data,id,mime_type},thread_id},scoped_thread_key},picture{height,cache_key,is_silhouette,width,url},fan_count,photos{album,created_time,from,icon,images,link,name,likes{name,pic,link,id,username}},cover,about,emails,engagement,link,location,current_location,bio,birthday,phone&access_token=${pageaccesstoken}`).then((res) => { return res.data })
         return res.json(Response(200, "success", JSON.stringify(data)))
     } catch (err) {
+        console.log(err);
         return res.status(500).json(Response(500, 'Error', err))
 
     }
@@ -145,6 +148,7 @@ app.post('/uploadpost', async (req, res) => {
 
         }
     } catch (err) {
+        console.log(err);
         log.message = "Failed to post in facebook"
         res.status(500).json(Response(500, 'Error', err))
     }
@@ -193,7 +197,8 @@ app.get('/twitter/getuserdetails/:id',async(req,res)=>{
         const data = { user,followers,following,timeline , mentions}
         return res.json(Response(200,"success",JSON.stringify(data)))
     } catch (error) {
-        return res.status(500).json(Response(500, 'Error', err))
+        console.log(error)
+        return res.status(500).json(Response(500, 'Error', error))
     }
 })
 
@@ -226,7 +231,7 @@ app.get('/twitter/oauth1',async(req,res)=>{
         return res.json(Response(200, "success", JSON.stringify(data)))
     } catch (error) {
         console.log(error);
-        return res.status(500).json(Response(500, 'Error', err))
+        return res.status(500).json(Response(500, 'Error', error))
     }
 })
 
@@ -255,7 +260,8 @@ app.post('/twitter/oauth2',async(req,res)=>{
 
         return res.json(Response(200, "success", JSON.stringify(data)))
     } catch (error) {
-        return res.status(500).json(Response(500, 'Error', err))
+        console.log(error);
+        return res.status(500).json(Response(500, 'Error', error))
     }
 })
 
@@ -301,8 +307,9 @@ app.post('/twitter/createtweet',async(req,res)=>{
         log.message = "Tweet created successfully"
         res.json(Response(200, "success", JSON.stringify(data)))
     } catch (error) {
+        console.log(error);
         log.message = "Failed to tweet"
-        res.status(500).json(Response(500, 'Error', err))
+        res.status(500).json(Response(500, 'Error', error))
     }
     // log to db using kafka producer
     await logProducer.send({

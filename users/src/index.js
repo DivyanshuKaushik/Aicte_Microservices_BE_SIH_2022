@@ -159,6 +159,9 @@ app.post('/createMassUsers',async(req,res)=>{
         const users = JSON.parse(req.body.users)
         for(let i = 0; i < users.length; i++){
             const {name, email,phone,role,department} = users[i]
+            if(!(name &&  email &&  phone && role && department)){
+                continue
+            }
             const id = uuid.v4()
             let password = generatePassword()
             const unhashedPassword = password;

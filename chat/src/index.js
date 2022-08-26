@@ -69,7 +69,8 @@ app.get('/inbox',async(req,res)=>{
         const user = JSON.parse(req.headers.user);
         const inbox = await ChatInbox.find({$or:[{user1:user.id},{user2:user.id}]}).sort({updatedAt:-1});
         return res.status(200).json(Response(200,"success",inbox));
-    }catch(err){
+    }catch(error){
+        console.log(error);
         return res.status(500).json(Response(500, "Error", error));
     }
 })
@@ -152,6 +153,7 @@ app.get('/commonChats', async (req, res) => {
             .status(200)
             .json(Response(200, "Success", chats));
     } catch (error) {
+        console.log(error);
         return res.status(500).json(Response(500, "Error", error));
     }
 })
@@ -169,6 +171,7 @@ app.get("/getMessages/:seconduser", async (req, res) => {
         });
         return res.status(200).json(Response(200, "Success", data));
     } catch (error) {
+        console.log(error);
         return res.status(500).json(Response(500, "Error", error));
     }
 });
